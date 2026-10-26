@@ -1,0 +1,6 @@
+gap,sukuk_days,raw_bias_bp,raw_mae_bp,adj_bias_bp,adj_mae_bp,adj_p90_bp,bonds_50d,adj_persistent_median_bp,adj_persistent_p90_bp,adj_err_5d_change_median_bp,adj_err_20d_change_median_bp
+<3m,11796,0.2,2.0,0.0,1.7,4.0,20,0.8,2.2,0.5,0.7
+3-6m,13453,1.3,4.4,1.3,3.5,8.0,25,1.4,5.2,0.8,1.4
+6-12m,10744,3.9,9.0,1.9,7.8,19.0,16,3.4,15.7,1.1,1.8
+1-2y,2255,-8.3,12.4,-4.2,8.2,26.9,7,12.4,25.2,1.1,1.9
+2-5y,735,-10.6,10.6,-3.7,3.9,7.9,1,3.7,3.7,0.6,1.3

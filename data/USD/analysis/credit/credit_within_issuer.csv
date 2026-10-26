@@ -1,0 +1,9 @@
+model,n_obs,issuers,slope_per_100bp,t_cluster_issuer,t_driscoll_kraay,liq_gap_coef,liq_gap_t
+"Conventional spread (mechanically biased, for comparison)",957,18,-19.2,-4.38,-7.46,,
+Sovereign CDS,850,16,-21.3,-5.74,-5.9,,
+Sovereign CDS + liquidity gap,850,16,-22.0,-5.41,-6.15,-0.81,-4.12
+CDS lagged 1 month + liquidity gap,834,16,-18.7,-4.15,-4.58,-0.75,-3.61
+CDS + liquidity + month FE,850,16,-30.3,-6.75,-6.7,-0.66,-2.29
+Sovereign issuers only (own CDS),381,5,-19.8,-11.55,-5.89,-0.58,-1.15
+Excluding Dubai govt (20y brackets),796,15,-23.1,-5.36,-6.02,-0.93,-5.83
+Excluding 2020,805,16,-22.7,-2.06,-3.32,-0.83,-3.3

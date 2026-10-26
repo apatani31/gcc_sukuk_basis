@@ -1,0 +1,5 @@
+variant,issuers,mean_of_issuer_means_bp,se_bp,t,median_of_issuer_means_bp,issuers_negative
+Main: interpolation + UST-adjusted nearest (<= 1y),18,-18.6,6.7,-2.78,-8.7,16
+Interpolation only,15,-15.8,6.2,-2.55,-8.9,14
+Interpolation brackets <= 10y,17,-21.3,6.2,-3.45,-8.9,16
+2020 onward only,18,-18.6,6.9,-2.71,-8.7,16

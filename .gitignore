@@ -1,0 +1,42 @@
+# credentials -- never commit
+secrets.env
+.env
+lseg-data.config.json
+*.config.json
+
+# environment / logs
+.venv/
+__pycache__/
+.pytest_cache/
+logs/
+
+# data: this repo is public and LSEG's licence does not allow republishing its
+# raw data (prices, yields, CDS, rates, the Workspace universe exports), so
+# everything under data/ is ignored except written reports, charts and
+# summary-statistic tables. Regenerate the rest with your own LSEG login.
+data/**
+!data/**/
+!data/USD/summary.md
+!data/USD/data_dictionary.csv
+!data/USD/analysis/twin_results.md
+!data/USD/analysis/*.png
+!data/USD/analysis/twin_issuer_stats.csv
+!data/USD/analysis/twin_robustness.csv
+!data/USD/analysis/twin_matching_validation.csv
+!data/USD/analysis/event_study/event_study.md
+!data/USD/analysis/event_study/*.png
+!data/USD/analysis/event_study/event_key_*.csv
+!data/USD/analysis/event_study/event_per_shock.csv
+!data/USD/analysis/event_study/event_episodes.csv
+!data/USD/analysis/event_study/event_passthrough.csv
+!data/USD/analysis/event_study/event_paths_*.csv
+!data/USD/analysis/credit/credit_results.md
+!data/USD/analysis/credit/*.png
+!data/USD/analysis/credit/credit_within_issuer.csv
+!data/USD/analysis/credit/credit_cross_issuer.csv
+!data/USD/analysis/credit/credit_leave_one_out.csv
+!data/USD/analysis/credit/credit_issuer_means.csv
+!data/USD/analysis/drivers/drivers_results.md
+!data/USD/analysis/drivers/*.png
+!data/USD/analysis/drivers/drivers_within_issuer.csv
+!data/market/oil_shocks_*.csv

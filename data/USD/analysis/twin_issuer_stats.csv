@@ -1,0 +1,19 @@
+issuer,country,sovereign,first_date,last_date,days,sukuk_bonds,mean_basis_bp,nw_se_bp,nw_t,median_basis_bp,p25_bp,p75_bp,share_negative_days,median_bracket_width_y,share_nearest_adj
+"Saudi Arabia, Kingdom of (Government)",Saudi Arabia,True,2017-04-21,2026-10-23,2480,14,-2.9,0.4,-7.33,-2.5,-6.0,0.7,0.7,1.0,0.01
+"Bahrain, Kingdom of (Government)",Bahrain,True,2017-09-20,2026-10-23,2356,12,-56.0,2.8,-19.95,-50.3,-77.9,-34.0,0.99,1.4,0.26
+"Oman, Sultanate of (Government)",Oman,True,2018-10-31,2026-10-23,2068,3,-55.3,4.4,-12.55,-41.3,-76.6,-23.5,0.99,1.5,0.06
+"Dubai, Emirate of",United Arab Emirates,True,2014-04-30,2020-06-19,1496,1,35.4,2.6,13.66,36.2,18.0,48.6,0.05,21.6,0.0
+"Sharjah, Emirate Of",United Arab Emirates,True,2021-04-23,2026-10-23,1431,8,-43.4,2.9,-14.97,-43.5,-54.5,-29.3,0.97,3.0,0.13
+Saudi Arabian Oil Co,Saudi Arabia,False,2021-06-17,2026-10-23,1397,6,-6.9,1.2,-5.63,-5.6,-14.2,1.8,0.68,3.4,0.0
+BAPCO Energies BSCC Closed,Bahrain,False,2021-04-08,2026-10-23,1377,1,-92.1,7.6,-12.12,-76.7,-145.1,-42.0,0.98,,1.0
+Investment Corporation Of Dubai,United Arab Emirates,False,2020-10-28,2025-04-25,1051,1,-21.6,3.9,-5.57,-21.7,-37.9,-1.2,0.76,,1.0
+First Abu Dhabi Bank PJSC,United Arab Emirates,False,2022-10-13,2026-10-23,1036,5,-7.6,1.4,-5.35,-8.3,-16.3,0.8,0.73,0.5,0.35
+The Saudi National Bank SJSC,Saudi Arabia,False,2022-01-19,2026-01-16,999,1,-5.0,1.3,-3.68,-3.0,-12.9,3.5,0.62,2.3,0.57
+Banque Saudi Fransi SJSC,Saudi Arabia,False,2023-05-31,2026-10-23,850,1,3.0,2.0,1.46,1.6,-7.1,12.1,0.46,,1.0
+Dubai Aerospace Enterprise (DAE) Ltd,United Arab Emirates,False,2021-01-20,2024-03-19,797,1,-9.0,4.1,-2.21,-10.8,-25.3,8.1,0.62,3.0,0.01
+Public Investment Fund,Saudi Arabia,False,2023-10-25,2026-10-23,783,6,-8.5,1.2,-6.86,-9.5,-14.0,-2.4,0.81,2.3,0.16
+Mamoura Diversified Global Holding PJSC,United Arab Emirates,False,2024-04-04,2026-10-23,665,2,-18.7,1.4,-13.0,-21.7,-25.0,-11.2,0.97,0.4,0.0
+DP World Ltd,United Arab Emirates,False,2025-01-15,2026-10-23,463,2,-29.8,3.8,-7.91,-35.5,-44.4,-13.7,0.94,18.8,0.5
+"Qatar, State of (Government)",Qatar,True,2025-11-10,2026-10-23,250,1,-8.9,2.7,-3.29,-6.5,-17.8,-0.4,0.76,6.9,0.0
+Oman Electricity Transmission Company S.A.O.C,Oman,False,2025-10-29,2026-10-23,239,1,-4.5,1.6,-2.78,-3.8,-10.1,1.6,0.69,3.7,0.51
+Arab Energy Fund,Saudi Arabia,False,2024-04-23,2026-10-23,222,2,-2.7,4.2,-0.64,-3.7,-17.5,5.3,0.63,1.4,0.38

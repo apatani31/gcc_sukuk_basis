@@ -1,0 +1,19 @@
+parent_key,parent_name,sovereign,cds_sovereign,months,basis,cds,spread_conv,liq_gap,ba_sukuk,ba_conv
+qatar state,"Qatar, State of (Government)",True,Qatar,12,-9.0,34.4,31.3,-0.8,3.0,3.8
+diversified global holding mamoura,Mamoura Diversified Global Holding PJSC,False,Abu Dhabi,31,-18.8,37.3,76.8,0.9,4.8,3.9
+abu bank dhabi first,First Abu Dhabi Bank PJSC,False,Abu Dhabi,49,-7.7,39.5,75.3,6.1,10.9,4.8
+dp world,DP World Ltd,False,Dubai,22,-29.7,58.4,138.7,0.5,8.1,7.6
+bank national saudi,The Saudi National Bank SJSC,False,KSA,49,-4.9,60.7,88.3,-0.5,7.3,7.8
+arabian oil saudi,Saudi Arabian Oil Co,False,KSA,65,-6.8,61.2,87.4,2.8,8.0,5.2
+banque fransi saudi,Banque Saudi Fransi SJSC,False,KSA,42,2.2,62.3,91.0,0.7,7.1,6.4
+fund investment public,Public Investment Fund,False,KSA,37,-8.6,63.3,95.2,1.4,5.6,4.3
+arabia kingdom saudi,"Saudi Arabia, Kingdom of (Government)",True,KSA,115,-2.8,72.7,97.1,-0.1,4.9,5.0
+electricity oman transmission,Oman Electricity Transmission Company S.A.O.C,False,Oman,13,-4.1,75.6,108.8,-9.3,14.3,23.7
+dubai investment,Investment Corporation Of Dubai,False,Dubai,55,-20.3,88.6,154.9,-7.6,20.0,27.6
+aerospace dae dubai enterprise,Dubai Aerospace Enterprise (DAE) Ltd,False,Dubai,39,-8.6,94.2,174.3,7.4,23.7,16.3
+dubai emirate,"Dubai, Emirate of",True,Dubai,75,35.4,154.2,174.5,-8.6,6.4,15.0
+oman sultanate,"Oman, Sultanate of (Government)",True,Oman,97,-54.7,217.6,252.1,4.8,17.8,13.0
+bapco energies,BAPCO Energies BSCC Closed,False,Bahrain,67,-91.9,231.5,311.0,-7.5,16.3,23.8
+bahrain kingdom,"Bahrain, Kingdom of (Government)",True,Bahrain,110,-55.9,262.7,294.8,6.0,18.9,12.9
+arab energy fund,Arab Energy Fund,False,,12,-1.5,,51.2,14.6,26.3,11.7
+emirate sharjah,"Sharjah, Emirate Of",True,,67,-43.6,,199.5,4.5,9.6,5.1

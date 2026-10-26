@@ -1,0 +1,4 @@
+model,issuers,corr,spearman,slope_per_100bp,t_robust,slope_with_liq_control,t_with_liq,liq_gap_coef,liq_gap_t
+"Conventional spread, all issuers",18,-0.74,-0.53,-25.6,-4.43,-26.4,-4.29,-0.69,-0.69
+Sovereign CDS,16,-0.65,-0.25,-25.6,-2.92,-25.7,-2.75,-0.69,-0.44
+"Sovereign CDS, excluding Dubai govt",15,-0.86,-0.36,-30.4,-4.44,-30.7,-5.39,0.85,0.99
