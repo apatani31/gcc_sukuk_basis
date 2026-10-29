@@ -57,3 +57,6 @@ data/**
 
 # local working notes, not part of the repository
 NEXT_PROMPT.md
+# hand-compiled rating histories (third-party data; already covered by data/** above, listed for clarity)
+data/market/sovereign_ratings.csv
+data/market/sovereign_ratings_TEMPLATE.csv

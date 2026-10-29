@@ -17,6 +17,7 @@ from pathlib import Path
 import pandas as pd
 
 from src import config as C
+from src.inference import fmt_p, holm
 from src.summary import _md
 
 log = logging.getLogger("run_synthesis")
@@ -50,6 +51,8 @@ def main(argv=None) -> int:
     ev, imp = rd("event_study/event_key_main.csv"), rd("oil_credit/oil_implied_vs_direct.csv")
     cdsev = rd("oil_credit/oil_cds_event_pooled.csv")
     sav, cf = rd("policy/policy_savings_by_issuer.csv"), rd("policy/policy_counterfactual.csv")
+    tv, oba = rd("mechanism/mechanism_time_varying.csv"), rd("mechanism/mechanism_oman_before_after.csv")
+    struct = rd("mechanism/mechanism_structure_overall.csv").set_index("structure")["sukuk"]
 
     tw = row(rob, variant=rob["variant"].iloc[0])
     oman = row(slopes, issuer="Oman, Sultanate of (Government)")
@@ -62,6 +65,13 @@ def main(argv=None) -> int:
     ijara = row(mech, term="cds100:ijara")
     ib = row(mech, term="cds100:ib_c")
     liq = row(mech, term="liq_gap")
+    # Holm correction across the four mechanism tests (government-clustered wild bootstrap p-values)
+    four = [tenor, ijara, ib, liq]
+    hp = dict(zip(("tenor", "ijara", "ib", "liq"), holm([r.p_wild_government for r in four])))
+    n_struct, n_ijara, n_hybrid = int(struct.sum()), int(struct.get("Ijara", 0)), int(struct.get("Hybrid Sukuk", 0))
+    tv_cds = tv[tv["model"].str.startswith("CDS >") & (tv["term"] == "sub_t")].iloc[0]
+    tv_rat = tv[tv["model"].str.startswith("Ratings") & (tv["term"] == "sub_t")]
+    moodys = oba[oba["event"].str.startswith("Moody's")].iloc[0]
     wk_s = row(nipg, weak="Weak credits", is_sukuk="Sukuk")
     wk_c = row(nipg, weak="Weak credits", is_sukuk="Conventional")
     ot_s = row(nipg, weak="Other issuers", is_sukuk="Sukuk")
@@ -85,11 +95,20 @@ def main(argv=None) -> int:
         ("Sukuk trade below their own issuer's conventional curve",
          f"{tw.mean_of_issuer_means_bp:.1f}bp average across {tw.issuers} issuers (median {tw.median_of_issuer_means_bp:.1f}bp); "
          f"{tw.issuers_negative} of {tw.issuers} negative; {int(level.governments_negative)} of "
-         f"{int(level.governments)} government groups negative on average.",
+         f"{int(level.governments)} obligor groups negative on average (issuers grouped by the government backing "
+         "them; Sharjah and the multilateral Arab Energy Fund stand alone).",
          "Holding the issuer fixed, investors accept a lower yield on sukuk."),
         ("The discount is a sub-investment-grade phenomenon",
          f"Sub-IG issuers {level.sub_ig_mean_bp:.0f}bp vs investment grade {level.ig_mean_bp:.0f}bp: gap "
-         f"{level.gap_bp:.0f}bp, wild bootstrap p = {level.p_wild_government:.3f} by government.",
+         f"{level.gap_bp:.0f}bp, wild bootstrap p = {fmt_p(level.p_wild_government)} by obligor group. With a "
+         f"time-varying rule (government CDS above 150bp that month) the gap is {tv_cds.coef_bp:.0f}bp "
+         f"(p = {fmt_p(tv_cds.p_wild_government)} by obligor group, {fmt_p(tv_cds.p_wild_issuer)} by issuer)"
+         + (f"; with time-varying ratings (2 of 3 agencies below BBB-/Baa3, Dubai via its DEWA proxy) "
+            f"{tv_rat.iloc[0].coef_bp:.0f}bp (p = {fmt_p(tv_rat.iloc[0].p_wild_government)}; "
+            f"{tv_rat.iloc[-1].coef_bp:.0f}bp, p = {fmt_p(tv_rat.iloc[-1].p_wild_government)}, with Dubai excluded)."
+            if len(tv_rat) else "; the rating-based version awaits the ratings history.")
+         + f" Oman's discount narrowed by {moodys.change_bp:.0f}bp (90% CI {moodys.ci90}) in the year after "
+         "Moody's upgrade made it investment grade at two of three agencies.",
          "A threshold, not a smooth gradient: investment-grade issuers get single-digit discounts."),
         ("Within the weakest sovereigns, the discount moves with credit risk",
          f"Oman {oman.slope_levels_per_100bp:+.1f}bp and Bahrain {bah.slope_levels_per_100bp:+.1f}bp per 100bp of CDS "
@@ -97,7 +116,7 @@ def main(argv=None) -> int:
          f"({oman.slope_changes_per_100bp:+.1f}, {bah.slope_changes_per_100bp:+.1f}). For investment-grade issuers "
          f"the within slope is {ig_slope.coef_bp:+.1f}bp.",
          f"The pooled panel slope ({panel.slope_per_100bp:+.1f}bp) is not significant on its own once only six CDS "
-         f"series are counted (wild bootstrap p = {panel.p_wild_government:.2f}); the case studies carry the claim."),
+         f"series are counted (wild bootstrap p = {fmt_p(panel.p_wild_government)}); the case studies carry the claim."),
         ("The discount exists at issue, not only in secondary quotes",
          f"Weak-credit sukuk priced a median {wk_s.median_bp:+.1f}bp against their issuer's conventional curve at issue, "
          f"vs {wk_c.median_bp:+.1f}bp for the same issuers' new conventional bonds and {ot_s.median_bp:+.1f}bp for "
@@ -111,19 +130,21 @@ def main(argv=None) -> int:
          + (f"{rv_bah.share_reversed:.0%})." if rv_bah.share_reversed > 0 else "no reversal)."),
          f"Even after 120 business days sukuk move {pt120.beta_shock:.2f}bp per conventional bp: damping is real, "
          "and stale quotes explain only part of the monthly CDS response."),
-        ("Mechanism: maturity matters, asset backing and local funding do not",
-         f"CDS slope steepens by {tenor.coef_bp:+.1f}bp per 100bp per year of maturity (wild p {tenor.p_wild_government:.2f}); "
-         f"CDS x Ijara {ijara.coef_bp:+.1f} (p {ijara.p_wild_government:.2f}); CDS x interbank {ib.coef_bp:+.2f} per bp "
-         f"(p {ib.p_wild_government:.2f}); less liquid sukuk price richer ({liq.coef_bp:+.2f}bp per bp bid-ask gap, "
-         f"p {liq.p_wild_government:.3f}).",
-         "Consistent with default/recovery pricing over tenor plus buy-and-hold demand; asset backing (Ijara) "
-         "does not carry it."),
+        ("Mechanism: tenor and buy-and-hold demand, with modest evidence",
+         "Holm-adjusted p-values across the four mechanism tests (government-clustered wild bootstrap): "
+         f"CDS slope steepens by {tenor.coef_bp:+.1f}bp per 100bp per year of maturity (p {fmt_p(hp['tenor'])}); "
+         f"less liquid sukuk price richer, {liq.coef_bp:+.2f}bp per bp of bid-ask gap (p {fmt_p(hp['liq'])}); "
+         f"CDS x interbank spread {ib.coef_bp:+.2f} per bp (p {fmt_p(hp['ib'])}); CDS x Ijara {ijara.coef_bp:+.1f} "
+         f"(p {fmt_p(hp['ijara'])}), a low-power test because only {n_ijara} of the {n_struct} twin sukuk are Ijara "
+         f"({n_hybrid} are Hybrid).",
+         "After the multiple-testing correction none clears 5%; the tenor and liquidity signs fit default/recovery "
+         "pricing plus buy-and-hold demand. The Ijara test cannot rule asset backing in or out."),
         ("Oil shocks do not move the basis directly",
          f"Median basis response to an oil-price rise {med5:+.1f}bp at +5 days; the test could detect {mde5:.1f}bp (+5) "
          f"or {mde20:.1f}bp (+20) with 80% power. Implied via credit: {imp5.implied_basis_bp:+.2f}bp "
          f"(90% CI {imp5.implied_ci90}).",
          f"Oil reaches the basis only through credit risk, and oil up-shocks in this sample raise GCC CDS "
-         f"(median {up5.median_bp:+.1f}bp at +5 days, placebo p {up5.placebo_p_median:.3f}); several of them are "
+         f"(median {up5.median_bp:+.1f}bp at +5 days, placebo p {fmt_p(up5.placebo_p_median)}); several of them are "
          "regional conflicts."),
         ("What it is worth",
          "; ".join(f"{r.issuer.split(',')[0]} about USD {r.saving_12m_usd_m:,.0f}m a year" for r in top.itertuples())
@@ -136,9 +157,25 @@ def main(argv=None) -> int:
     spec = pd.DataFrame([
         {"specification": "Twin-curve basis, cross-issuer mean", "estimate": f"{tw.mean_of_issuer_means_bp:.1f}bp",
          "inference": f"t = {tw.t:.2f} across {tw.issuers} issuers", "source": "twin_results.md"},
-        {"specification": "Sub-IG minus IG basis (level)", "estimate": f"{level.gap_bp:.1f}bp",
-         "inference": f"wild p = {level.p_wild_government:.3f} (government, {int(level.clusters)} clusters)",
+        {"specification": "Sub-IG minus IG basis (level, snapshot ratings with Oman sub-IG)",
+         "estimate": f"{level.gap_bp:.1f}bp",
+         "inference": f"wild p = {fmt_p(level.p_wild_government)} (obligor groups, {int(level.clusters)} clusters)",
          "source": "credit_results.md"},
+        {"specification": "Sub-IG minus IG basis (time-varying: CDS > 150bp)", "estimate": f"{tv_cds.coef_bp:.1f}bp",
+         "inference": f"wild p = {fmt_p(tv_cds.p_wild_government)} (obligor groups), {fmt_p(tv_cds.p_wild_issuer)} (issuer)",
+         "source": "mechanism_results.md"},
+        *([{"specification": f"Sub-IG minus IG basis ({r.model.split(':')[0].replace('Ratings', 'time-varying ratings')}"
+                             + (", Dubai via DEWA proxy)" if "excluded" not in r.model else ")"),
+            "estimate": f"{r.coef_bp:.1f}bp",
+            "inference": f"wild p = {fmt_p(r.p_wild_government)} (obligor groups), {fmt_p(r.p_wild_issuer)} (issuer)",
+            "source": "mechanism_results.md"} for r in tv_rat.itertuples()]),
+        *([{"specification": f"Extra CDS slope when sub-IG ({r.model.split(':')[0].replace('Ratings', 'time-varying ratings')})",
+            "estimate": f"{r.coef_bp:+.1f} per 100bp",
+            "inference": f"wild p = {fmt_p(r.p_wild_government)} (obligor groups), {fmt_p(r.p_wild_issuer)} (issuer)",
+            "source": "mechanism_results.md"}
+           for r in tv[tv["model"].str.startswith("Ratings") & (tv["term"] == "cds100:sub_t")].itertuples()]),
+        {"specification": "Oman: basis change after Moody's upgrade (12m vs 12m)", "estimate": f"{moodys.change_bp:+.1f}bp",
+         "inference": f"Newey-West 90% CI {moodys.ci90}", "source": "mechanism_results.md"},
         {"specification": "Oman: basis on CDS, levels / changes",
          "estimate": f"{oman.slope_levels_per_100bp:+.1f} / {oman.slope_changes_per_100bp:+.1f} per 100bp",
          "inference": f"NW t {oman.t_nw_levels:.1f} / {oman.t_nw_changes:.1f}", "source": "credit_results.md"},
@@ -146,17 +183,25 @@ def main(argv=None) -> int:
          "estimate": f"{bah.slope_levels_per_100bp:+.1f} / {bah.slope_changes_per_100bp:+.1f} per 100bp",
          "inference": f"NW t {bah.t_nw_levels:.1f} / {bah.t_nw_changes:.1f}", "source": "credit_results.md"},
         {"specification": "Panel within slope (issuer FE + liquidity)", "estimate": f"{panel.slope_per_100bp:+.1f} per 100bp",
-         "inference": f"cluster t {panel.t_cluster_issuer:.1f}; wild p = {panel.p_wild_government:.2f} (gov), "
-                      f"{panel.p_wild_issuer:.2f} (issuer)", "source": "credit_results.md"},
+         "inference": f"cluster t {panel.t_cluster_issuer:.1f}; wild p = {fmt_p(panel.p_wild_government)} (obligor "
+                      f"groups), {fmt_p(panel.p_wild_issuer)} (issuer)", "source": "credit_results.md"},
         {"specification": "Panel, first differences", "estimate": f"{fd.coef_bp:+.1f} per 100bp",
-         "inference": f"wild p = {fd.p_wild_government:.2f} (gov)", "source": "mechanism_results.md"},
+         "inference": f"wild p = {fmt_p(fd.p_wild_government)} (obligor groups)", "source": "mechanism_results.md"},
         {"specification": "Extra within slope for sub-IG issuers", "estimate": f"{sub_extra.coef_bp:+.1f} per 100bp",
-         "inference": f"wild p = {sub_extra.p_wild_government:.2f} (gov), {sub_extra.p_wild_issuer:.2f} (issuer)",
-         "source": "mechanism_results.md"},
+         "inference": f"wild p = {fmt_p(sub_extra.p_wild_government)} (obligor groups), "
+                      f"{fmt_p(sub_extra.p_wild_issuer)} (issuer)", "source": "mechanism_results.md"},
         {"specification": "CDS x remaining maturity", "estimate": f"{tenor.coef_bp:+.2f} per 100bp per year",
-         "inference": f"wild p = {tenor.p_wild_government:.3f} (gov)", "source": "mechanism_results.md"},
+         "inference": f"wild p = {fmt_p(tenor.p_wild_government)}; Holm-adjusted {fmt_p(hp['tenor'])}",
+         "source": "mechanism_results.md"},
         {"specification": "Liquidity gap", "estimate": f"{liq.coef_bp:+.2f}bp per bp",
-         "inference": f"wild p = {liq.p_wild_government:.3f} (gov)", "source": "mechanism_results.md"},
+         "inference": f"wild p = {fmt_p(liq.p_wild_government)}; Holm-adjusted {fmt_p(hp['liq'])}",
+         "source": "mechanism_results.md"},
+        {"specification": "CDS x Ijara (low power: few Ijara sukuk)", "estimate": f"{ijara.coef_bp:+.1f} per 100bp",
+         "inference": f"wild p = {fmt_p(ijara.p_wild_government)}; Holm-adjusted {fmt_p(hp['ijara'])}",
+         "source": "mechanism_results.md"},
+        {"specification": "CDS x interbank spread", "estimate": f"{ib.coef_bp:+.2f} per 100bp per bp",
+         "inference": f"wild p = {fmt_p(ib.p_wild_government)}; Holm-adjusted {fmt_p(hp['ib'])}",
+         "source": "mechanism_results.md"},
         {"specification": "New-issue premium, weak-credit sukuk minus conventional",
          "estimate": f"{wk_s.median_bp - wk_c.median_bp:+.1f}bp (medians)",
          "inference": f"{int(wk_s.bonds)} sukuk, {int(wk_c.bonds)} conventional", "source": "data_quality_results.md"},
@@ -194,7 +239,9 @@ def main(argv=None) -> int:
           "- drivers/drivers_results.md: interbank, issuance and the common factor.\n",
           "## Main caveats\n",
           "- Six independent sovereign CDS series and 18 issuers: small-sample inference throughout.",
-          "- Ratings are snapshots; Oman's sovereign is treated as sub-IG because it was for most of the sample.",
+          "- The headline level gap uses export-date snapshot ratings with Oman counted as sub-IG; the "
+          "time-varying rating rule (hand-compiled histories; Dubai proxied by DEWA, rationale in README.md) "
+          "and the CDS rule confirm it. Under the 2-of-3 rule Sharjah counts as investment grade.",
           "- Secondary sukuk quotes are staler than conventional ones; the primary-market check is the defence.",
           "- Raw LSEG data is not distributed with this repository.\n"]
     (A / "synthesis.md").write_text("\n".join(L), encoding="utf-8")

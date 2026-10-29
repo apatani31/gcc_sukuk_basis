@@ -231,3 +231,42 @@ weights, `src/inference.py`). Start with `data/USD/analysis/synthesis.md`.
 - **Rate limits.** Calls are spaced 0.25 s apart, retried with exponential
   backoff on transient errors (not on invalid-instrument errors), and failed
   chunks or instruments get one final retry pass.
+- **Sovereign ratings are time-varying and hand-compiled.** LSEG's
+  rating-history fields (`TR.IssuerRating`, `TR.GR.Rating`) are not entitled
+  on this login, so `data/market/sovereign_ratings.csv` (government, agency,
+  date, rating, source) was compiled by hand from public sources named in its
+  `source` column. It is gitignored: rating histories are third-party data.
+  An obligor-month is **sub-investment grade if at least two of S&P, Moody's
+  and Fitch rate the government below BBB-/Baa3**. `NR` means the agency does
+  not rate the government, so it does not count. A rating action applies from
+  the month after its date; a rating dated the 1st of a month (the rating in
+  force at the sample start) applies that month. State companies take their
+  owner's rating (`src/ratings.py`, `ISSUER_GOVERNMENT`); the multilateral
+  Arab Energy Fund has no government rating and is left out of the rating rule.
+  Consequences worth knowing: Bahrain is sub-IG from April 2016; Oman is
+  sub-IG from January 2019 until Moody's upgrade (investment grade at two
+  agencies from August 2025); **Sharjah counts as investment grade
+  throughout**, because Fitch does not rate it and only Moody's (Ba1) of the
+  two remaining agencies is below the line (S&P BBB-).
+- **Dubai's rating is proxied by DEWA.** The Government of Dubai is not rated
+  by S&P, Moody's or Fitch, so it would otherwise drop out of the rating rule.
+  Its rows in `sovereign_ratings.csv` are the ratings of the Dubai Electricity
+  & Water Authority (DEWA), marked `DEWA proxy` in the `source` column. On
+  this proxy Dubai is investment grade in every month (S&P BBB+ then BBB;
+  Moody's Baa2 then A3). The rating-based results are also reported with Dubai
+  excluded (`mechanism_results.md`, section 8).
+  - *Why DEWA rather than DP World.* Both are fully or majority state-owned
+    and both are used by credit analysts to read Dubai's credit, but they
+    measure different things. DEWA is a wholly government-owned utility that
+    functions much like a department of the state, with the government as its
+    ultimate backstop, so its rating tracks the emirate's **direct sovereign
+    risk**. DP World is a global commercial ports and logistics business, so
+    its rating reflects Dubai's broader **economic and commercial leverage**
+    and its own business risk. The rule needs the government's own credit
+    standing, which makes DEWA the cleaner proxy. DEWA is also not one of the
+    twin issuers, whereas DP World is, so using DP World would classify DP
+    World's bonds by DP World's own rating.
+  - *Why not the UAE federal rating.* The federal government is a different,
+    stronger credit (little debt, effectively backed by Abu Dhabi) and does
+    not guarantee Dubai's debt. Dubai's 5y CDS ranged 44-338bp over the
+    sample, against 27-164bp for Abu Dhabi.

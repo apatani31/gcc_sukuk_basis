@@ -1,0 +1,188 @@
+SOURCES: GCC sukuk vs conventional bond capstone (MGMT 4090, Group 2)
+Last updated 2026-10-29 (ratings sources added). APA style. Add new sources under the matching heading.
+
+======================================================================
+1. PRELIMINARY RESEARCH (literature used in Research Brief 1)
+======================================================================
+
+Umar, Z., Abrar, A., Hadhri, S., & Sokolova, T. (2023). The connectedness of
+    oil shocks, green bonds, sukuks and conventional bonds. Energy Economics,
+    119, 106562. https://doi.org/10.1016/j.eneco.2023.106562
+    Use: oil supply/demand/risk shocks and index-level spillovers into sukuk.
+    Note: confirm the shock decomposition and index names against the full
+    text (Penn Libraries).
+
+Saeed, M., Elnahass, M., Izzeldin, M., & Tsionas, M. (2021). Yield spread
+    determinants of sukuk and conventional bonds. Economic Modelling, 105,
+    105664. https://doi.org/10.1016/j.econmod.2021.105664
+    Use: firm-level spread determinants, 58 listed Malaysian firms; stale-
+    pricing caveat for sukuk.
+
+Fitch Ratings. (2026, February). Sukuk and bond pricing correlation study,
+    2025 data. As reported in Saxena, A. (2026, February 5). Prices of sukuk
+    and bond maintain solid correlation. Gulf Daily News.
+    https://www.gdnonline.com/Details/1375249/Prices-of-sukuk-and-bond-maintain-solid-correlation
+    Use: same-issuer sukuk/bond pairs (54 pairs, 0.97 correlation, sukuk
+    about 6bp tighter). Cite the Fitch report directly if obtained
+    (fitchratings.com, free with registration).
+
+======================================================================
+2. CONTEXT AND FACT CHECKS
+======================================================================
+
+MEED. (n.d.). Oman recovers investment-grade credit rating.
+    https://www.meed.com/oman-recovers-investment-grade-credit-rating
+    Use: S&P upgrade of Oman to BBB- (September 2024); Moody's to Baa3
+    (July 2025); about seven years sub-investment grade before that.
+
+Gulfbase. (2025, December 9). Fitch elevates Oman to investment grade, stable
+    outlook affirmed.
+    https://www.gulfbase.com/news/fitch-elevates-oman-to-investment-grade-stable-outlook-affirmed/213264
+    Use: Fitch upgrade of Oman to BBB- (December 2025).
+
+======================================================================
+3. METHODS (econometric techniques used in the pipeline)
+======================================================================
+
+Newey, W. K., & West, K. D. (1987). A simple, positive semi-definite,
+    heteroskedasticity and autocorrelation consistent covariance matrix.
+    Econometrica, 55(3), 703-708. https://doi.org/10.2307/1913610
+    Use: HAC standard errors for issuer time series and event-study tests.
+
+Driscoll, J. C., & Kraay, A. C. (1998). Consistent covariance matrix
+    estimation with spatially dependent panel data. Review of Economics and
+    Statistics, 80(4), 549-560. https://doi.org/10.1162/003465398557825
+    Use: panel standard errors robust to common monthly shocks.
+
+Cameron, A. C., Gelbach, J. B., & Miller, D. L. (2008). Bootstrap-based
+    improvements for inference with clustered errors. Review of Economics and
+    Statistics, 90(3), 414-427. https://doi.org/10.1162/rest.90.3.414
+    Use: wild cluster bootstrap with few clusters (six CDS governments).
+
+Webb, M. D. (2023). Reworking wild bootstrap-based inference for clustered
+    errors. Canadian Journal of Economics, 56(3), 839-858.
+    https://doi.org/10.1111/caje.12661
+    Use: six-point (Webb) weights for the wild cluster bootstrap.
+
+Holm, S. (1979). A simple sequentially rejective multiple test procedure.
+    Scandinavian Journal of Statistics, 6(2), 65-70.
+    Use: multiple-testing correction across the mechanism tests (task 8).
+
+======================================================================
+4. DATA
+======================================================================
+
+LSEG Workspace / LSEG Data Library for Python (formerly Refinitiv). Accessed
+    October 2026 under Penn's licence. Raw data is not redistributed (see
+    .gitignore).
+    - Security universe: Workspace Search Results exports (Sukuk.xlsx;
+      Conv_1.xlsx, issued 2020-2026; Conv_2.xlsx, issued 2010-2019), USD,
+      GCC country of risk, issued 2010 onward.
+    - Bond prices and yields: composite RICs and Tradeweb (<ISIN>=TE);
+      fields BID, ASK, MID_PRICE, B_YLD_1, A_YLD_1, MID_YLD_1.
+    - Sovereign 5y USD CDS: SAGV5YUSAC=R (KSA), BHGV5YUSAC=R (Bahrain),
+      QAGV5YUSAC=R (Qatar), ABUU5YUSAC=R (Abu Dhabi), DUBA5YUSAC=R (Dubai),
+      OMGV5YUSAC=MG (Oman), plus Kuwait (code in run_policy.py).
+    - Interbank 3m fixings: SASAR3MD= (SAIBOR), DXAED3MD= (EIBOR),
+      QAQAR3MD= (QIBOR), BHIBOR3M= (BHIBOR), KIBOR3M= (Kuwait),
+      OMOMR3MD=CBOX (Oman).
+    - Market series: LCOc1 and LCOc12 (Brent futures), .SPX, .VIX, .DXY,
+      US10YT=RR, and the US Treasury curve (data/market/ust_curve.parquet).
+
+======================================================================
+5. SOVEREIGN RATINGS (data/market/sovereign_ratings.csv)
+======================================================================
+Long-term foreign-currency issuer ratings, S&P / Moody's / Fitch, for Oman,
+Bahrain, Sharjah, KSA, Qatar, Abu Dhabi, Dubai and Kuwait, 2016-01-01 to
+2026-10-29. Compiled 2026-10-29. The "source" column in the CSV uses the short
+labels below.
+
+Rating-history tables (most 2016-2022 dates; cross-checked where possible):
+  Countryeconomy table
+    https://countryeconomy.com/ratings/oman
+    https://countryeconomy.com/ratings/bahrain
+    https://countryeconomy.com/ratings/saudi-arabia
+    https://countryeconomy.com/ratings/qatar
+    https://countryeconomy.com/ratings/kuwait
+  TradingEconomics table (Oman S&P history): tradingeconomics.com, Oman
+    credit rating page.
+  FXEmpire table
+    https://www.fxempire.com/credit-ratings/oman
+    https://www.fxempire.com/credit-ratings/bahrain
+  EMTA table
+    https://www.emta.org/new-developments/sovereign-credit-ratings/
+
+Agency releases and government statements:
+  MoF statement (Oman, S&P upgrade to BBB-, 2024-09-27)
+    https://www.mof.gov.om/download.aspx?id=L1VwbG9hZHNBbGwvUHJvamVjdHNTZWN0aW9uc1RhYnMvMTcyNzY5MzEzOTMxME9tYW4gUmVnYWlucyBJbnZlc3RtZW50IEdyYWRlMS5wZGY%3D
+    https://www.fm.gov.om/en/32215/
+  Fitch release (Oman upgrade to BBB-, 2025-12-08; via Reuters/TradingView)
+    https://www.tradingview.com/news/reuters.com,2025-12-08:newsml_FIT86ngG8:0-fitch-upgrades-oman-to-bbb-outlook-stable/
+  Moody's release (Sharjah downgrade to Baa3, 2021-02-11; via Yahoo Finance)
+    https://finance.yahoo.com/news/sharjah-sukuk-programme-limited-moodys-165006609.html
+  Sharjah prospectus (Sharjah GMTN programme supplement, 22 Feb 2021; S&P
+    BBB- 2020-10-23 and Fitch not rating Sharjah)
+    https://feeds.nasdaqdubai.com/resources/2021/Mar/10/bbc0f1bf-c33c-4db3-b02b-5ce39d3008be/Sharjah%20GMTN%20Programme%20-%20Supplement%20(22.02.21)%20FINAL.pdf
+
+News coverage:
+  Arab News (Moody's cuts Bahrain to B1 and Oman to Baa2, 2017-07-28)
+    https://www.arabnews.com/business/moodys-downgrades-bahrain-rating-to-b1-1136471
+  Gulf News (Moody's cuts Bahrain to B2, August 2018)
+    https://gulfnews.com/amp/story/business%2Fmoodys-downgrades-bahrain-to-b2-1.2261105
+  Gulf News (Moody's cuts Kuwait to A1, 2020-09-22)
+    https://gulfnews.com/business/banking/moodys-downgrades-kuwaits-credit-rating-to-a1-changes-outlook-to-stable-1.74060386
+  Gulf News (UAE / Abu Dhabi Aa2)
+    https://gulfnews.com/business/banking/uaes-aa2-rating-with-stable-outlook-reflects-its-fiscal-strength-1.75773781
+  Gulf News (Sharjah S&P cut to BBB+, January 2017); month also confirmed by
+    EMEA Finance and Oxford Business Group:
+    https://www.emeafinance.com/live/banking-top/risk-management/2807-bank-of-sharjah-hits-road-amid-deep-ratings-cut-for-emirates
+    https://oxfordbusinessgroup.com/articles-interviews/sharjah-year-in-review-2017
+  Reuters news (S&P cuts Sharjah to BBB, 2020-02-14; via Nasdaq)
+    https://www.nasdaq.com/articles/sp-downgrades-emirate-of-sharjah-rating-to-bbb-2020-02-16
+  Zawya news (Moody's cuts Sharjah to Baa2, February 2020)
+    https://zawya.com/mena/en/economy/story/Sharjahs_nonoil_economy_to_remain_below_historical_rates-ZAWYA20200219105047
+  Forbes news (Moody's cuts Sharjah to Ba1, 2022-07-19)
+    https://www.forbes.com/sites/dominicdudley/2022/07/20/moodys-sends-dubais-neighbor-sharjah-down-into-junk-status/
+  Sharjah Update (Sharjah S&P history and affirmations)
+    https://www.sharjahupdate.com/tag/sp/
+    https://www.sharjahupdate.com/2024/05/emirate-of-sharjah-bbb-a-3-ratings-affirmed-outlook-stable-report/
+  The National (Sharjah Moody's A3; Abu Dhabi S&P and Fitch AA)
+    https://www.thenationalnews.com/business/moody-s-affirms-a3-rating-and-stable-outlook-for-sharjah-1.684882
+    https://www.thenationalnews.com/business/economy/2025/06/26/uae-economy-credit-rating/
+    https://www.thenationalnews.com/business/economy/2026/05/23/gulf-countries-maintain-credit-ratings-and-stable-outlooks-amid-iran-war-uncertainties/
+  Al Jazeera (Fitch upgrades Qatar to AA, 2024-03-20)
+    https://www.aljazeera.com/economy/2024/3/20/fitch-ratings-upgrades-qatar-to-third-highest-on-back-of-gas-expansion
+  Bloomberg news (S&P cuts Bahrain to B, 2025-11-21)
+    https://www.bloomberg.com/news/articles/2025-11-21/bahrain-gets-first-s-p-downgrade-since-2017-as-debt-woes-persist
+  Finance Middle East (S&P cuts Bahrain, upgrades Kuwait, November 2025)
+    https://www.financemiddleeast.com/opinion/delaying-the-inevitable-sp-downgrades-bahrain-but-upgrades-kuwait/
+  TradingView news (Fitch cuts Bahrain to B, 2026-02-23)
+    https://www.tradingview.com/news/te_news:527794:0-fitch-downgrades-bahrain-credit-rating-to-b/
+
+Dubai proxy (DEWA):
+  The Government of Dubai has no public sovereign rating from S&P, Moody's or
+  Fitch, so the "Dubai" rows use the ratings of Dubai Electricity and Water
+  Authority (DEWA), a wholly government-owned utility. Every Dubai row is
+  marked "DEWA proxy" in the source column. NR rows were removed from the
+  CSV (Dubai at all three agencies; Fitch for Oman before 2017-01-03; Fitch
+  for Sharjah, which it does not rate). Fitch's DEWA rating could not be
+  found after 2012, so there are no Fitch rows for Dubai.
+  Arab News (S&P cuts DEWA to BBB from BBB+, 2018-09-05; source for the S&P
+    BBB+ starting level)
+    https://www.arabnews.com/business/sp-cuts-credit-ratings-on-two-dubai-firms-cites-weaker-economy-1367626
+  Moody's release (DEWA upgraded to Baa2 from Baa3; source for the Moody's
+    Baa2 starting level; release date not retrieved)
+    https://www.moodys.com/research/Moodys-upgrades-DEWAs-ratings-to-Baa2-from-Baa3-stable-outlook--PR_297046
+  Moody's release (DEWA upgraded to Baa1 from Baa2; DATE NOT RETRIEVED, so
+    this change is NOT yet in the CSV; look up the date on moodys.com)
+    https://www.moodys.com/research/Moodys-upgrades-DEWAs-ratings-to-Baa1-from-Baa2-stable-outlook--PR_349875
+  Arab News (Moody's affirms DEWA at Baa1, outlook negative, November 2019)
+    https://www.arabnews.com/business/moodys-affirms-dewa-and-dp-world-ratings-but-revises-outlook-for-dubai-owned-firms-1591686
+  Reuters news (Moody's cuts DEWA to Baa2 from Baa1, 2020-04-29; via Yahoo)
+    https://finance.yahoo.com/news/moodys-downgrades-dubai-utility-dewa-133652717.html
+  Arab News (Moody's affirms DEWA Baa2, outlook to stable, 2021-10-13)
+    https://www.arabnews.com/business/moodys-revises-outlook-for-dubais-utility-to-stable-1947431
+  DFM disclosure (Moody's upgrades DEWA to A3 from Baa2; DEWA press release
+    to the Dubai Financial Market, 2024-05-29)
+    https://feeds.dfm.ae/documents/2024/May/30/4cef1a32-5ef2-4c73-83ea-3cd95a18f277/PRL.DEWA.CREDIT%20RATING%20En.pdf
+    https://www.dewa.gov.ae/en/about-us/media-publications/latest-news/2024/05/dubai-electricity-and-water-authority-pjsc-announces

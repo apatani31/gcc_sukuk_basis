@@ -208,6 +208,17 @@ INTERBANK_RICS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Time-varying ratings (NEXT_PROMPT task 8)
+# ---------------------------------------------------------------------------
+# LSEG rating-history fields are not entitled on this login (checked 2026-10-29), so
+# sovereign_ratings.csv is supplied by hand (see src/ratings.py for the format).
+SOVEREIGN_RATINGS_PATH = DATA_DIR / "market" / "sovereign_ratings.csv"
+# Oman upgrades to investment grade, as supplied by the user (month precision).
+OMAN_UPGRADES = [("S&P", "2024-09", "BBB-"), ("Moody's", "2025-07", "Baa3"), ("Fitch", "2025-12", "BBB-")]
+CDS_SUB_IG_BP = 150.0   # CDS-based alternative: an obligor-month is "sub-IG" if its government's CDS > 150bp
+
+
 @dataclass
 class RunConfig:
     session: str = "desktop"

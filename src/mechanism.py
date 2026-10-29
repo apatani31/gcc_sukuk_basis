@@ -167,6 +167,56 @@ def inference_table(im: pd.DataFrame, B: int = 9999) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
+# 8b. Time-varying sub-IG classification
+# ---------------------------------------------------------------------------
+def time_varying_threshold(im: pd.DataFrame, flag: str, label: str, B: int = 9999) -> list[dict]:
+    """Level gap and extra within slope with a monthly sub-IG flag (column `flag`, 0/1).
+
+    Level gap: issuer-month basis on the flag, no fixed effects (cross-sectional and over time),
+    clustered by obligor group. Extra slope: CDS x flag with issuer fixed effects, so it is identified
+    within issuers, including from issuers whose status changes (e.g. Oman's upgrades)."""
+    d = im.dropna(subset=["basis", flag]).copy()
+    d["sub_t"] = d[flag].astype(float)
+    switchers = d.groupby("parent_key")["sub_t"].nunique()
+    note = f"{int((d['sub_t'] == 1).sum())} sub-IG obligor-months; issuers switching status: {int((switchers > 1).sum())}"
+    rows = [reg_row(f"{label}: level gap, sub-IG minus IG (obligor-months)", "basis ~ sub_t", d, "sub_t", B,
+                    {"note": note})]
+    dc = d.dropna(subset=["cds"])
+    rows.append(reg_row(f"{label}: CDS slope when IG", "basis ~ cds100 + sub_t + cds100:sub_t + C(parent_key)",
+                        dc, "cds100", B))
+    rows.append(reg_row(f"{label}: extra CDS slope when sub-IG",
+                        "basis ~ cds100 + sub_t + cds100:sub_t + C(parent_key)", dc, "cds100:sub_t", B))
+    return rows
+
+
+def before_after(im: pd.DataFrame, parent_key: str, events, window: int = 12, lags: int = 3) -> pd.DataFrame:
+    """Mean basis in the `window` months before vs after each event month (event month excluded).
+
+    events: (agency, 'YYYY-MM', rating). Difference = after - before with a Newey-West 90% CI
+    from regressing the monthly basis on an 'after' dummy."""
+    import statsmodels.api as sm
+
+    s = im[im["parent_key"] == parent_key].dropna(subset=["basis"]).copy()
+    s["m"] = pd.PeriodIndex(s["month"], freq="M")
+    rows = []
+    for agency, ym, rating in events:
+        e = pd.Period(ym, "M")
+        pre = s[(s["m"] >= e - window) & (s["m"] <= e - 1)]
+        post = s[(s["m"] >= e + 1) & (s["m"] <= e + window)]
+        rec = {"event": f"{agency} to {rating}", "month": ym, "months_before": len(pre), "months_after": len(post),
+               "mean_before_bp": round(pre["basis"].mean(), 1) if len(pre) else np.nan,
+               "mean_after_bp": round(post["basis"].mean(), 1) if len(post) else np.nan}
+        if len(pre) >= 3 and len(post) >= 3:
+            w = pd.concat([pre.assign(after=0.0), post.assign(after=1.0)]).sort_values("m")
+            r = sm.OLS(w["basis"], sm.add_constant(w["after"])).fit(cov_type="HAC", cov_kwds={"maxlags": lags})
+            lo, hi = r.conf_int(alpha=0.10).loc["after"]
+            rec.update(change_bp=round(r.params["after"], 1), ci90=f"[{lo:.1f}, {hi:.1f}]",
+                       t_nw=round(r.tvalues["after"], 2))
+        rows.append(rec)
+    return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
 # 2. Threshold
 # ---------------------------------------------------------------------------
 def hinge(x: pd.Series, k: float) -> pd.Series:

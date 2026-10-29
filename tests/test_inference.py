@@ -2,7 +2,17 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.inference import WEBB, issuer_slopes, wild_cluster_bootstrap
+from src.inference import WEBB, fmt_p, holm, issuer_slopes, wild_cluster_bootstrap
+
+
+def test_holm_matches_hand_calculation():
+    # sorted p: 0.01, 0.02, 0.04, 0.30 -> x4, x3, x2, x1 = 0.04, 0.06, 0.08, 0.30 (monotone)
+    assert holm([0.04, 0.01, 0.30, 0.02]) == pytest.approx([0.08, 0.04, 0.30, 0.06])
+    assert holm([0.5, 0.6]).max() <= 1.0
+
+
+def test_fmt_p():
+    assert fmt_p(0.0) == "< 0.001" and fmt_p(0.0153) == "0.015"
 
 
 def test_webb_weights_have_mean_zero_unit_variance():

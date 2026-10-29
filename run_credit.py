@@ -16,7 +16,7 @@ import pandas as pd
 
 from src import config as C
 from src.credit import build_panel, cross_issuer, leave_one_sovereign_out, pull_cds, within_issuer
-from src.inference import issuer_slopes, wild_cluster_bootstrap
+from src.inference import fmt_p, issuer_slopes, wild_cluster_bootstrap
 from src.mechanism import issuer_ratings
 from src.summary import _md
 from src.twin import load_panel
@@ -159,11 +159,13 @@ def main(argv=None) -> int:
          "## What the evidence supports\n",
          "The claim rests on three pieces, in this order of strength:\n",
          f"1. **Level, across issuers.** {n_neg} of {n_all} issuers have a negative mean basis, and the "
-         f"average is negative for every one of the {len(gov_means)} governments (or government groups). "
+         f"average is negative in {int((gov_means < 0).sum())} of {len(gov_means)} obligor groups (issuers grouped "
+         "by the government whose credit backs them; Sharjah and the multilateral Arab Energy Fund form their own "
+         "groups). "
          f"Sub-investment-grade issuers (Bahrain, BAPCO, Sharjah, Oman Electricity Transmission, and the Oman "
          f"sovereign, which was sub-IG for most of the sample) average {sub_mean:.0f}bp against {ig_mean:.0f}bp for "
-         f"investment-grade issuers: a gap of {gap['coef']:.0f}bp, wild cluster bootstrap p = {gap['p_wild']:.3f} "
-         f"clustering by government ({gap['clusters']} clusters).",
+         f"investment-grade issuers: a gap of {gap['coef']:.0f}bp, wild cluster bootstrap p = {fmt_p(gap['p_wild'])} "
+         f"clustering by obligor group ({gap['clusters']} clusters).",
          "2. **Case studies within issuers.** The two governments whose CDS moved most show the discount "
          "widening as credit risk rises, in levels and in monthly changes:",
          case_line("Oman, Sultanate of (Government)"), case_line("Bahrain, Kingdom of (Government)"),

@@ -1,0 +1,4 @@
+event,month,months_before,months_after,mean_before_bp,mean_after_bp,change_bp,ci90,t_nw
+S&P to BBB-,2024-09,12,12,-34.6,-39.0,-4.3,"[-19.1, 10.5]",-0.48
+Moody's to Baa3,2025-07,12,12,-43.1,-21.7,21.4,"[10.3, 32.4]",3.18
+Fitch to BBB-,2025-12,12,10,-34.5,-17.6,16.9,"[4.4, 29.5]",2.22

@@ -1,13 +1,21 @@
 specification,estimate,inference,source
 "Twin-curve basis, cross-issuer mean",-18.6bp,t = -2.78 across 18 issuers,twin_results.md
-Sub-IG minus IG basis (level),-45.0bp,"wild p = 0.015 (government, 8 clusters)",credit_results.md
+"Sub-IG minus IG basis (level, snapshot ratings with Oman sub-IG)",-45.0bp,"wild p = 0.015 (obligor groups, 8 clusters)",credit_results.md
+Sub-IG minus IG basis (time-varying: CDS > 150bp),-54.6bp,"wild p = 0.077 (obligor groups), 0.022 (issuer)",mechanism_results.md
+"Sub-IG minus IG basis (time-varying ratings, 2 of 3 agencies below BBB-/Baa3, Dubai via DEWA proxy)",-58.2bp,"wild p = 0.038 (obligor groups), 0.014 (issuer)",mechanism_results.md
+"Sub-IG minus IG basis (time-varying ratings, Dubai excluded (robustness))",-56.4bp,"wild p = 0.074 (obligor groups), 0.009 (issuer)",mechanism_results.md
+"Extra CDS slope when sub-IG (time-varying ratings, 2 of 3 agencies below BBB-/Baa3)",-35.0 per 100bp,"wild p = 0.038 (obligor groups), 0.014 (issuer)",mechanism_results.md
+"Extra CDS slope when sub-IG (time-varying ratings, Dubai excluded (robustness))",-33.4 per 100bp,"wild p = 0.096 (obligor groups), 0.039 (issuer)",mechanism_results.md
+Oman: basis change after Moody's upgrade (12m vs 12m),+21.4bp,"Newey-West 90% CI [10.3, 32.4]",mechanism_results.md
 "Oman: basis on CDS, levels / changes",-21.5 / -50.0 per 100bp,NW t -4.0 / -7.4,credit_results.md
 "Bahrain: basis on CDS, levels / changes",-19.2 / -21.2 per 100bp,NW t -3.0 / -4.3,credit_results.md
-Panel within slope (issuer FE + liquidity),-22.0 per 100bp,"cluster t -5.4; wild p = 0.29 (gov), 0.10 (issuer)",credit_results.md
-"Panel, first differences",-30.4 per 100bp,wild p = 0.18 (gov),mechanism_results.md
-Extra within slope for sub-IG issuers,-27.9 per 100bp,"wild p = 0.18 (gov), 0.06 (issuer)",mechanism_results.md
-CDS x remaining maturity,-2.09 per 100bp per year,wild p = 0.046 (gov),mechanism_results.md
-Liquidity gap,-0.81bp per bp,wild p = 0.019 (gov),mechanism_results.md
+Panel within slope (issuer FE + liquidity),-22.0 per 100bp,"cluster t -5.4; wild p = 0.287 (obligor groups), 0.105 (issuer)",credit_results.md
+"Panel, first differences",-30.4 per 100bp,wild p = 0.183 (obligor groups),mechanism_results.md
+Extra within slope for sub-IG issuers,-27.9 per 100bp,"wild p = 0.185 (obligor groups), 0.063 (issuer)",mechanism_results.md
+CDS x remaining maturity,-2.09 per 100bp per year,wild p = 0.046; Holm-adjusted 0.138,mechanism_results.md
+Liquidity gap,-0.81bp per bp,wild p = 0.019; Holm-adjusted 0.076,mechanism_results.md
+CDS x Ijara (low power: few Ijara sukuk),+10.9 per 100bp,wild p = 0.718; Holm-adjusted 0.718,mechanism_results.md
+CDS x interbank spread,-0.10 per 100bp per bp,wild p = 0.313; Holm-adjusted 0.626,mechanism_results.md
 "New-issue premium, weak-credit sukuk minus conventional",-59.5bp (medians),"21 sukuk, 29 conventional",data_quality_results.md
 "Oil-price rise, basis at +5 days (median)",+0.6bp,MDE80 3.1bp,event_study.md
 "Implied via CDS, +5 days",+0.71bp,"90% CI [-0.82, 2.77]",oil_credit_results.md

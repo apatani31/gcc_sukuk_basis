@@ -6,7 +6,7 @@ Generated 2026-10-29. Issuer-month panel from the twin-curve basis.
 
 The claim rests on three pieces, in this order of strength:
 
-1. **Level, across issuers.** 16 of 18 issuers have a negative mean basis, and the average is negative for every one of the 8 governments (or government groups). Sub-investment-grade issuers (Bahrain, BAPCO, Sharjah, Oman Electricity Transmission, and the Oman sovereign, which was sub-IG for most of the sample) average -50bp against -5bp for investment-grade issuers: a gap of -45bp, wild cluster bootstrap p = 0.015 clustering by government (8 clusters).
+1. **Level, across issuers.** 16 of 18 issuers have a negative mean basis, and the average is negative in 8 of 8 obligor groups (issuers grouped by the government whose credit backs them; Sharjah and the multilateral Arab Energy Fund form their own groups). Sub-investment-grade issuers (Bahrain, BAPCO, Sharjah, Oman Electricity Transmission, and the Oman sovereign, which was sub-IG for most of the sample) average -50bp against -5bp for investment-grade issuers: a gap of -45bp, wild cluster bootstrap p = 0.015 clustering by obligor group (8 clusters).
 2. **Case studies within issuers.** The two governments whose CDS moved most show the discount widening as credit risk rises, in levels and in monthly changes:
 - **Oman** (CDS range 620bp over 97 months): -21.5bp per 100bp in levels (Newey-West t -4.0), -50.0bp in monthly changes (t -7.4).
 - **Bahrain** (CDS range 360bp over 103 months): -19.2bp per 100bp in levels (Newey-West t -3.0), -21.2bp in monthly changes (t -4.3).

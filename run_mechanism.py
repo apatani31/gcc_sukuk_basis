@@ -18,8 +18,10 @@ import numpy as np
 import pandas as pd
 
 from src import config as C
-from src.mechanism import (bond_month_panel, hinge, inference_table, issuer_ratings, mechanism_regressions,
-                           prep_issuer_month, structure_tables, threshold_models)
+from src.mechanism import (before_after, bond_month_panel, hinge, inference_table, issuer_ratings,
+                           mechanism_regressions, prep_issuer_month, structure_tables, threshold_models,
+                           time_varying_threshold)
+from src.ratings import ISSUER_GOVERNMENT, load_ratings, monthly_status, template
 from src.summary import _md
 from src.twin_report import CONV_C, GRID, INK, INK2, SUKUK_C, SURFACE, _style
 
@@ -121,6 +123,42 @@ def main(argv=None) -> int:
                   sub_ig=("sub_ig", "first"), sub_ig_oman=("sub_ig_oman", "first"),
                   rating_snapshot=("rating_snapshot", "first")).reset_index())
     thr = threshold_models(im, iss, B=a.draws)
+
+    # 8. Time-varying classification: CDS rule now; rating rule when the ratings file exists
+    im["sub_cds"] = np.where(im["cds"].notna(), (im["cds"] > C.CDS_SUB_IG_BP).astype(float), np.nan)
+    tv_rows = time_varying_threshold(im, "sub_cds", f"CDS > {C.CDS_SUB_IG_BP:.0f}bp", B=a.draws)
+    rating_note = ""
+    if C.SOVEREIGN_RATINGS_PATH.exists():
+        rt = load_ratings(C.SOVEREIGN_RATINGS_PATH)
+        months = pd.PeriodIndex(sorted(im["month"].unique()), freq="M")
+        ms = monthly_status(rt, months)
+        ms["month"] = ms["month"].astype(str)
+        im["government"] = im["parent_key"].map(ISSUER_GOVERNMENT)
+        im = im.merge(ms[["government", "month", "sub_ig", "single_agency"]].rename(
+            columns={"sub_ig": "sub_rating"}), on=["government", "month"], how="left")
+        tv_rows += time_varying_threshold(im, "sub_rating", "Ratings, 2 of 3 agencies below BBB-/Baa3", B=a.draws)
+        # robustness: drop Dubai, whose status comes from the DEWA proxy rather than its own rating
+        im["sub_rating_ex_dubai"] = im["sub_rating"].where(im["government"] != "Dubai")
+        tv_rows += time_varying_threshold(im, "sub_rating_ex_dubai", "Ratings, Dubai excluded (robustness)",
+                                          B=a.draws)
+        ms.to_csv(out / "mechanism_rating_status_monthly.csv", index=False)
+        proxies = sorted({s.split(";")[0].strip() for s in rt["source"].dropna() if "proxy" in s.lower()})
+        rating_note = (f"Ratings file: `{C.SOVEREIGN_RATINGS_PATH.name}` ({len(rt)} rating rows). "
+                       f"Single-agency obligor-months: {int(im['single_agency'].fillna(False).sum())}. "
+                       "**Dubai:** the government is not rated by S&P, Moody's or Fitch, so its rows are the ratings "
+                       f"of a government-related entity ({', '.join(proxies) or 'see the source column'}); the "
+                       "rationale is in README.md (Design decisions). Dubai is investment grade in every month on "
+                       "this proxy, and the *Dubai excluded* rows show the result without it. **Sharjah** counts as "
+                       "investment grade under the 2-of-3 rule: Fitch does not rate it, S&P has it at BBB- and "
+                       "Moody's at Ba1, so only one of the two rating agencies is below the line.")
+    else:
+        tmpl = C.SOVEREIGN_RATINGS_PATH.with_name("sovereign_ratings_TEMPLATE.csv")
+        template(tmpl, [(ag, f"{ym}-01", r) for ag, ym, r in C.OMAN_UPGRADES])
+        rating_note = (f"**Rating-based rows pending:** `{C.SOVEREIGN_RATINGS_PATH.name}` is not present. LSEG "
+                       "rating-history fields are not entitled on this login, so the file must be supplied by hand "
+                       f"(template written to `{tmpl.name}`).")
+    tv = pd.DataFrame(tv_rows)
+    oman_ba = before_after(im, "oman sultanate", C.OMAN_UPGRADES)
     chart_threshold(iss, thr["profile_cross"], out / "mechanism_threshold_cross.png")
     chart_profile(thr["profile_cross"], thr["profile_within"], out / "mechanism_spline_profile.png")
 
@@ -128,7 +166,8 @@ def main(argv=None) -> int:
                      ("mechanism_regressions", mech), ("mechanism_inference", inf),
                      ("mechanism_threshold", thr["table"]), ("mechanism_spline_profile_cross", thr["profile_cross"]),
                      ("mechanism_spline_profile_within", thr["profile_within"]),
-                     ("mechanism_issuer_ratings", iss.round(1))):
+                     ("mechanism_issuer_ratings", iss.round(1)), ("mechanism_time_varying", tv),
+                     ("mechanism_oman_before_after", oman_ba)):
         df.to_csv(out / f"{name}.csv", index=False)
 
     sen = bm["seniority"].value_counts().to_dict()
@@ -181,6 +220,19 @@ def main(argv=None) -> int:
          "Spline profiles (fit for each kink location):\n\n**Across issuers (excl. Dubai govt):**\n\n",
          _md(thr["profile_cross"].drop(columns=["ssr"]).round(2)),
          "\n**Within issuers:**\n\n", _md(thr["profile_within"].drop(columns=["ssr"]).round(2)),
+         "\n## 8. Time-varying classification\n",
+         "Snapshot ratings misclassify issuers whose rating changed (Oman). Here the sub-IG flag varies by "
+         f"obligor-month. The CDS rule marks a month sub-IG when the government's 5y CDS exceeds "
+         f"{C.CDS_SUB_IG_BP:.0f}bp. The rating rule needs at least two of S&P, Moody's and Fitch below "
+         "BBB-/Baa3 (a single rating agency decides only where just one rates the government). Level gaps use "
+         "obligor-months without fixed effects; the extra slope uses issuer fixed effects. Wild bootstrap "
+         "clusters are obligor groups (government, or the issuer itself where no government CDS applies).\n\n",
+         rating_note + "\n\n", _md(tv),
+         "\n**Oman before vs after each upgrade to investment grade** (12 months either side, the upgrade month "
+         "excluded; Newey-West 90% CI, 3 lags). Upgrade months as supplied: "
+         + "; ".join(f"{ag} {r} {ym}" for ag, ym, r in C.OMAN_UPGRADES)
+         + ". Windows overlap because the upgrades are 4-10 months apart, and the last one has fewer than 12 "
+         "months after it, so read these as descriptive.\n\n", _md(oman_ba),
          "\n## 3. Inference with six credit series\n",
          "The panel t-statistics in credit_results.md treat 16 issuers as independent. They share only six "
          "CDS series, so the government-clustered wild bootstrap is the honest test. First differences remove "

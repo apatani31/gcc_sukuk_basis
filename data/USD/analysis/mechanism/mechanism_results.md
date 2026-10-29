@@ -166,6 +166,37 @@ Spline profiles (fit for each kink location):
 | 300 | 0.64 | -16.2 | -29.9 | 57 | False |
 
 
+## 8. Time-varying classification
+
+Snapshot ratings misclassify issuers whose rating changed (Oman). Here the sub-IG flag varies by obligor-month. The CDS rule marks a month sub-IG when the government's 5y CDS exceeds 150bp. The rating rule needs at least two of S&P, Moody's and Fitch below BBB-/Baa3 (a single rating agency decides only where just one rates the government). Level gaps use obligor-months without fixed effects; the extra slope uses issuer fixed effects. Wild bootstrap clusters are obligor groups (government, or the issuer itself where no government CDS applies).
+
+
+Ratings file: `sovereign_ratings.csv` (89 rating rows). Single-agency obligor-months: 0. **Dubai:** the government is not rated by S&P, Moody's or Fitch, so its rows are the ratings of a government-related entity (DEWA proxy); the rationale is in README.md (Design decisions). Dubai is investment grade in every month on this proxy, and the *Dubai excluded* rows show the result without it. **Sharjah** counts as investment grade under the 2-of-3 rule: Fitch does not rate it, S&P has it at BBB- and Moody's at Ba1, so only one of the two rating agencies is below the line.
+
+
+| model | term | coef_bp | t_cluster_issuer | n_obs | issuers | p_wild_government | p_wild_issuer | note |
+|---|---|---|---|---|---|---|---|---|
+| CDS > 150bp: level gap, sub-IG minus IG (obligor-months) | sub_t | -54.65 | -5.66 | 850 | 16 | 0.077 | 0.022 | 247 sub-IG obligor-months; issuers switching status: 4 |
+| CDS > 150bp: CDS slope when IG | cds100 | 16.47 | 0.98 | 850 | 16 | 0.659 | 0.364 |  |
+| CDS > 150bp: extra CDS slope when sub-IG | cds100:sub_t | -45.28 | -2.39 | 850 | 16 | 0.375 | 0.081 |  |
+| Ratings, 2 of 3 agencies below BBB-/Baa3: level gap, sub-IG minus IG (obligor-months) | sub_t | -58.25 | -5.89 | 924 | 17 | 0.038 | 0.014 | 256 sub-IG obligor-months; issuers switching status: 1 |
+| Ratings, 2 of 3 agencies below BBB-/Baa3: CDS slope when IG | cds100 | 10.37 | 1.09 | 850 | 16 | 0.085 | 0.303 |  |
+| Ratings, 2 of 3 agencies below BBB-/Baa3: extra CDS slope when sub-IG | cds100:sub_t | -34.95 | -3.25 | 850 | 16 | 0.038 | 0.014 |  |
+| Ratings, Dubai excluded (robustness): level gap, sub-IG minus IG (obligor-months) | sub_t | -56.38 | -5.6 | 754 | 13 | 0.074 | 0.009 | 256 sub-IG obligor-months; issuers switching status: 1 |
+| Ratings, Dubai excluded (robustness): CDS slope when IG | cds100 | 8.79 | 2.2 | 680 | 12 | 0.357 | 0.098 |  |
+| Ratings, Dubai excluded (robustness): extra CDS slope when sub-IG | cds100:sub_t | -33.36 | -5.64 | 680 | 12 | 0.096 | 0.039 |  |
+
+
+**Oman before vs after each upgrade to investment grade** (12 months either side, the upgrade month excluded; Newey-West 90% CI, 3 lags). Upgrade months as supplied: S&P BBB- 2024-09; Moody's Baa3 2025-07; Fitch BBB- 2025-12. Windows overlap because the upgrades are 4-10 months apart, and the last one has fewer than 12 months after it, so read these as descriptive.
+
+
+| event | month | months_before | months_after | mean_before_bp | mean_after_bp | change_bp | ci90 | t_nw |
+|---|---|---|---|---|---|---|---|---|
+| S&P to BBB- | 2024-09 | 12 | 12 | -34.6 | -39.0 | -4.3 | [-19.1, 10.5] | -0.48 |
+| Moody's to Baa3 | 2025-07 | 12 | 12 | -43.1 | -21.7 | 21.4 | [10.3, 32.4] | 3.18 |
+| Fitch to BBB- | 2025-12 | 12 | 10 | -34.5 | -17.6 | 16.9 | [4.4, 29.5] | 2.22 |
+
+
 ## 3. Inference with six credit series
 
 The panel t-statistics in credit_results.md treat 16 issuers as independent. They share only six CDS series, so the government-clustered wild bootstrap is the honest test. First differences remove the common trend in CDS and the basis.

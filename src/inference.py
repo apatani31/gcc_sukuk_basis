@@ -67,6 +67,22 @@ def wild_cluster_bootstrap(formula: str, data: pd.DataFrame, target: str, cluste
             "p_t_G_minus_1": float(2 * stats.t.sf(abs(t0), G - 1)), "clusters": int(G), "n_obs": int(n)}
 
 
+def holm(pvalues) -> np.ndarray:
+    """Holm step-down adjusted p-values (family-wise error control), in the input order."""
+    p = np.asarray(pvalues, float)
+    order = np.argsort(p)
+    m = len(p)
+    adj = np.maximum.accumulate((m - np.arange(m)) * p[order])
+    out = np.empty(m)
+    out[order] = np.minimum(adj, 1.0)
+    return out
+
+
+def fmt_p(p: float) -> str:
+    """p-value for text: '< 0.001' rather than '0.000'."""
+    return "< 0.001" if p < 0.001 else f"{p:.3f}"
+
+
 def nw_slope(y: pd.Series, x: pd.Series, lags: int) -> tuple[float, float, int]:
     """OLS slope of y on x with Newey-West t (time series)."""
     import statsmodels.api as sm
