@@ -1,0 +1,5 @@
+model,term,coef_bp,t_cluster_issuer,n_obs,issuers,p_wild_government,p_wild_issuer
+"Main within slope: basis ~ CDS + liquidity, issuer FE",cds100,-21.99,-5.41,850,16,0.286,0.105
+"Main within slope, no liquidity control",cds100,-21.3,-5.74,850,16,0.277,0.099
+First differences: d(basis) ~ d(CDS) + d(liquidity),d_cds100,-30.4,-3.35,831,16,0.183,0.105
+"First differences, no liquidity control",d_cds100,-30.4,-3.34,831,16,0.182,0.109

@@ -1,0 +1,13 @@
+specification,estimate,inference,source
+"Twin-curve basis, cross-issuer mean",-18.6bp,t = -2.78 across 18 issuers,twin_results.md
+Sub-IG minus IG basis (level),-45.0bp,"wild p = 0.015 (government, 8 clusters)",credit_results.md
+"Oman: basis on CDS, levels / changes",-21.5 / -50.0 per 100bp,NW t -4.0 / -7.4,credit_results.md
+"Bahrain: basis on CDS, levels / changes",-19.2 / -21.2 per 100bp,NW t -3.0 / -4.3,credit_results.md
+Panel within slope (issuer FE + liquidity),-22.0 per 100bp,"cluster t -5.4; wild p = 0.29 (gov), 0.10 (issuer)",credit_results.md
+"Panel, first differences",-30.4 per 100bp,wild p = 0.18 (gov),mechanism_results.md
+Extra within slope for sub-IG issuers,-27.9 per 100bp,"wild p = 0.18 (gov), 0.06 (issuer)",mechanism_results.md
+CDS x remaining maturity,-2.09 per 100bp per year,wild p = 0.046 (gov),mechanism_results.md
+Liquidity gap,-0.81bp per bp,wild p = 0.019 (gov),mechanism_results.md
+"New-issue premium, weak-credit sukuk minus conventional",-59.5bp (medians),"21 sukuk, 29 conventional",data_quality_results.md
+"Oil-price rise, basis at +5 days (median)",+0.6bp,MDE80 3.1bp,event_study.md
+"Implied via CDS, +5 days",+0.71bp,"90% CI [-0.82, 2.77]",oil_credit_results.md

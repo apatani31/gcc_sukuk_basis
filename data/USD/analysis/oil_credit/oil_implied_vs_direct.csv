@@ -1,0 +1,3 @@
+tau,shocks,oil_to_cds_bp,oil_to_cds_ci90,cds_to_basis_bp_per_100bp,slope_ci90,implied_basis_bp,implied_ci90,direct_basis_mean_bp,direct_basis_median_bp,direct_mde80_bp
+5,26,-3.2,"[-12.4, 3.6]",-22.0,"[-31.3, 9.2]",0.71,"[-0.82, 2.77]",4.9,0.6,3.1
+20,26,-6.6,"[-21.9, 4.5]",-22.0,"[-31.3, 9.2]",1.46,"[-1.15, 4.85]",1.0,-0.8,4.9

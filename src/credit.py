@@ -96,8 +96,12 @@ def build_panel(basis: pd.DataFrame, bond_panel: pd.DataFrame, cds: pd.DataFrame
     return p
 
 
-def _fit(formula: str, d: pd.DataFrame, x: str, label: str) -> dict:
+def _fit(formula: str, d: pd.DataFrame, x: str, label: str, B: int = 0) -> dict:
+    """Issuer-FE regression row: issuer-clustered and Driscoll-Kraay t, plus (B > 0) restricted wild
+    cluster bootstrap p-values by government and by issuer (Webb weights)."""
     import statsmodels.formula.api as smf
+
+    from .inference import wild_cluster_bootstrap
 
     d = d.dropna(subset=[c for c in ["basis", x, "liq_gap"] if c in formula or c == x])
     if d["parent_key"].nunique() < 3 or len(d) < 20:
@@ -109,6 +113,12 @@ def _fit(formula: str, d: pd.DataFrame, x: str, label: str) -> dict:
     out = {"model": label, "n_obs": len(d), "issuers": d["parent_key"].nunique(),
            "slope_per_100bp": round(cl.params[x] * 100, 1),
            "t_cluster_issuer": round(cl.tvalues[x], 2), "t_driscoll_kraay": round(dk.tvalues[x], 2)}
+    if B:
+        dd = d.assign(cds_sovereign=d["cds_sovereign"].fillna(d["parent_key"]))
+        for name, col in (("government", "cds_sovereign"), ("issuer", "parent_key")):
+            if dd[col].nunique() >= 3:
+                out[f"p_wild_{name}"] = round(wild_cluster_bootstrap(formula, dd, x, col, B=B)["p_wild"], 3)
+                out[f"clusters_{name}"] = int(dd[col].nunique())
     if "liq_gap" in formula:
         out["liq_gap_coef"] = round(cl.params["liq_gap"], 2)
         out["liq_gap_t"] = round(cl.tvalues["liq_gap"], 2)
@@ -165,19 +175,19 @@ def within_issuer_drivers(p: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def within_issuer(p: pd.DataFrame) -> pd.DataFrame:
+def within_issuer(p: pd.DataFrame, B: int = 0) -> pd.DataFrame:
     fe = "C(parent_key)"
     rows = [
         _fit(f"basis ~ spread_conv + {fe}", p, "spread_conv",
              "Conventional spread (mechanically biased, for comparison)"),
-        _fit(f"basis ~ cds + {fe}", p, "cds", "Sovereign CDS"),
-        _fit(f"basis ~ cds + liq_gap + {fe}", p, "cds", "Sovereign CDS + liquidity gap"),
-        _fit(f"basis ~ cds_lag1 + liq_gap + {fe}", p, "cds_lag1", "CDS lagged 1 month + liquidity gap"),
-        _fit(f"basis ~ cds + liq_gap + {fe} + C(t)", p, "cds", "CDS + liquidity + month FE"),
-        _fit(f"basis ~ cds + liq_gap + {fe}", p[p["sovereign"]], "cds", "Sovereign issuers only (own CDS)"),
+        _fit(f"basis ~ cds + {fe}", p, "cds", "Sovereign CDS", B),
+        _fit(f"basis ~ cds + liq_gap + {fe}", p, "cds", "Sovereign CDS + liquidity gap", B),
+        _fit(f"basis ~ cds_lag1 + liq_gap + {fe}", p, "cds_lag1", "CDS lagged 1 month + liquidity gap", B),
+        _fit(f"basis ~ cds + liq_gap + {fe} + C(t)", p, "cds", "CDS + liquidity + month FE", B),
+        _fit(f"basis ~ cds + liq_gap + {fe}", p[p["sovereign"]], "cds", "Sovereign issuers only (own CDS)", B),
         _fit(f"basis ~ cds + liq_gap + {fe}", p[p["parent_key"] != "dubai emirate"], "cds",
-             "Excluding Dubai govt (20y brackets)"),
-        _fit(f"basis ~ cds + liq_gap + {fe}", p[p["month"].dt.year != 2020], "cds", "Excluding 2020"),
+             "Excluding Dubai govt (20y brackets)", B),
+        _fit(f"basis ~ cds + liq_gap + {fe}", p[p["month"].dt.year != 2020], "cds", "Excluding 2020", B),
     ]
     return pd.DataFrame(rows)
 

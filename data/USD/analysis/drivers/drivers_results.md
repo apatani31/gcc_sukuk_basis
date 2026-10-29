@@ -1,6 +1,6 @@
 # Drivers of the sukuk discount: funding, supply and a common factor
 
-Generated 2026-10-25.
+Generated 2026-10-29.
 
 ## New variables
 
@@ -82,6 +82,8 @@ Generated 2026-10-25.
 ## Common factor (PCA on the issuer-by-month basis)
 
 Each column (issuer) is demeaned and standardized, so every issuer counts equally and only movements over time matter. The panel must be balanced, so only issuers observed in at least 90% of months enter (short gaps of up to 2 months are interpolated). *Changes* runs the PCA on monthly changes, which avoids trends driving the result.
+
+> **Sukuk issuance is not a finding.** In levels, GCC sukuk issuance looks like the strongest single driver of the factor (t of about 8 to 10). In monthly changes the effect is zero, and in the issuer panel it is insignificant and flips sign with month fixed effects. Both series trend over 2021-2026, so the levels result is most likely a shared trend, not a supply effect. Do not cite it as evidence.
 
 
 ### Main: Jul 2021 - Sep 2026: 6 issuers, 63 months
@@ -233,5 +235,5 @@ What moves PC1? Coefficients are per one standard deviation of each driver (Newe
 
 - The PCA uses 6 issuers (8 in the robustness window) over about 5 years, so it shows whether there is a common component, not a precise decomposition.
 - Level regressions on trending series (CDS fell a lot after 2022) can show spurious relationships. Read the changes regressions as the stricter test.
-- The issuance variable covers USD issuance only.
+- The issuance variable covers USD issuance only, and its levels relationship with the factor is a shared trend (see the note above).
 - Interbank fixings are matched by country, so Abu Dhabi, Dubai and Sharjah issuers share EIBOR.

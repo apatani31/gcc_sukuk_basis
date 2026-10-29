@@ -1,0 +1,5 @@
+group,obs,same_day,same_day_t,lags_1_5_sum,lags_t,total
+All twin issuers,49570,0.472,15.4,0.151,11.1,0.623
+"Weak credits (Bahrain, Oman, BAPCO, Sharjah)",19017,0.43,9.5,0.134,7.4,0.564
+Other issuers,30553,0.53,24.6,0.202,9.3,0.732
+KSA government,12714,0.814,36.5,0.074,5.2,0.888

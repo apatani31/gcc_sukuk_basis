@@ -169,6 +169,22 @@ balanced issuer-by-month basis panel and regresses the first factor on GCC-wide
 drivers, in levels and in monthly changes. Output:
 `data/USD/analysis/drivers/drivers_results.md`.
 
+## Mechanism, inference, oil through credit, policy, data quality, synthesis
+
+Run after the stages above (all offline except the one-off Kuwait CDS pull):
+
+```bash
+.venv/Scripts/python run_mechanism.py                    # structure, tenor, captive demand, threshold, wild bootstrap
+.venv/Scripts/python run_oil_credit.py                   # oil shocks -> CDS event study, implied basis effect
+.venv/Scripts/python run_policy.py --session platform    # coupon savings, counterfactual (pulls Kuwait CDS once)
+.venv/Scripts/python run_data_quality.py                 # staleness, lead-lag, reversal, primary-market premium
+.venv/Scripts/python run_credit.py                       # credit report with case studies and wild bootstrap
+.venv/Scripts/python run_synthesis.py                    # headline numbers, main specifications, key charts
+```
+
+Inference with few clusters uses a restricted wild cluster bootstrap (Webb
+weights, `src/inference.py`). Start with `data/USD/analysis/synthesis.md`.
+
 ## Design decisions and data caveats
 
 - **Scope.** About 75% of conventional rows are CDs and commercial paper. They

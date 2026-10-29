@@ -1,0 +1,8 @@
+sovereign,current_cds_bp,model,predicted_basis_bp,pred_interval_90,saving_per_usd_1bn_m,saving_interval_90,fit_issuers
+Kuwait,60.1,IG vs sub-IG dummy,-9.5,"[-46.1, 27.2]",0.95,"[-2.72, 4.61]",14
+Kuwait,60.1,CDS spline (kink 70bp),-8.3,"[-31.9, 15.4]",0.83,"[-1.54, 3.19]",15
+Kuwait,60.1,Linear CDS,-10.1,"[-35.4, 15.2]",1.01,"[-1.52, 3.54]",15
+Abu Dhabi,37.4,IG vs sub-IG dummy,-9.5,"[-46.1, 27.2]",0.95,"[-2.72, 4.61]",14
+Abu Dhabi,37.4,CDS spline (kink 70bp),-13.1,"[-38.9, 12.7]",1.31,"[-1.27, 3.89]",15
+Abu Dhabi,37.4,Linear CDS,-3.2,"[-28.9, 22.4]",0.32,"[-2.24, 2.89]",15
+UAE (federal),,IG vs sub-IG dummy,-9.5,"[-46.1, 27.2]",0.95,"[-2.72, 4.61]",14

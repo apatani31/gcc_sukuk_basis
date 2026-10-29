@@ -88,6 +88,8 @@ def _key_table(agg: dict) -> pd.DataFrame:
                  "basis t (mean)": round(a.loc[tau, "d_basis_t"], 2)}
             p = pl["d_basis"].loc[tau, "d_basis_placebo_p"] if tau in pl["d_basis"].index else np.nan
             r["basis placebo p (median)"] = round(p, 3)
+            mde = pl["d_basis"].loc[tau, "d_basis_mde80"] if tau in pl["d_basis"].index else np.nan
+            r["basis MDE 80% (bp)"] = round(mde, 1)
             for v in ("d_sukuk", "d_conv"):
                 r[f"{LABEL[v]} mean"] = round(a.loc[tau, f"{v}_mean"], 1)
                 r[f"{LABEL[v]} median"] = round(a.loc[tau, f"{v}_median"], 1)
@@ -283,4 +285,9 @@ def _findings(key_main: pd.DataFrame, key_ex: pd.DataFrame, pt: pd.DataFrame) ->
             out.append(f"- **Pass-through at {h} days:** sukuk move {a['beta_shock']:.2f}bp per 1bp of the "
                        f"matched conventional yield after shocks (ex-2020) vs {a['beta_normal']:.2f} on normal "
                        f"days; difference {a['diff']:+.2f}, 90% CI {a['diff_ci90']}.")
+    mde = [f"{s} +{t}d: {k.loc[(s, t), 'basis MDE 80% (bp)']:.1f}bp" for s in ("up", "down", "pooled")
+           for t in (5, 20) if (s, t) in k.index]
+    out.append("- **Minimum detectable effect (80% power, two-sided 5%, median across shocks):** "
+               + "; ".join(mde) + ". Smaller true median basis responses than these could go undetected. The "
+               "pooled figure is per oil-price *rise* (down-shocks sign-flipped).")
     return out

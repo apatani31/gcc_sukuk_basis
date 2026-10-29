@@ -52,9 +52,9 @@ def load_panel(universe: pd.DataFrame, timeseries_dir: Path, cfg: dict = TWIN) -
              len(bonds), int(bonds.is_sukuk.sum()), len(keys))
 
     fields = ["mid_yield", "bid_yield", "ask_yield", "mid_price"]
+    # filter inside pyarrow (fields AND instruments): loading the whole dataset can exhaust memory
     ts = pd.read_parquet(timeseries_dir, columns=["date", "instrument_id", "field", "value"],
-                         filters=[("field", "in", fields)])
-    ts = ts[ts["instrument_id"].isin(bonds["instrument_id"])]
+                         filters=[("field", "in", fields), ("instrument_id", "in", list(bonds["instrument_id"]))])
     w = ts.pivot_table(index=["instrument_id", "date"], columns="field", values="value",
                        aggfunc="first").reset_index()
     for f in fields:

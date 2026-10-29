@@ -16,9 +16,11 @@ import pandas as pd
 
 from src import config as C
 from src.credit import build_panel, cross_issuer, leave_one_sovereign_out, pull_cds, within_issuer
+from src.inference import issuer_slopes, wild_cluster_bootstrap
+from src.mechanism import issuer_ratings
 from src.summary import _md
 from src.twin import load_panel
-from src.twin_report import INK, INK2, SUKUK_C, SURFACE, _style
+from src.twin_report import CONV_C, INK, INK2, SUKUK_C, SURFACE, _style
 
 log = logging.getLogger("run_credit")
 CDS_PATH = C.DATA_DIR / "market" / "sovereign_cds.parquet"
@@ -53,10 +55,42 @@ def chart_cross_issuer(iss: pd.DataFrame, out: Path) -> None:
     plt.close(fig)
 
 
+CASE_ISSUERS = ["Bahrain, Kingdom of (Government)", "Oman, Sultanate of (Government)",
+                "Saudi Arabia, Kingdom of (Government)"]
+
+
+def chart_case_studies(panel: pd.DataFrame, out: Path) -> None:
+    """Monthly basis (top row) and the government's CDS (bottom row) for Bahrain, Oman and KSA.
+    Two rows instead of a dual axis: the measures have different scales."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(2, 3, figsize=(12, 5.4), sharex=True, facecolor=SURFACE,
+                             gridspec_kw={"height_ratios": [3, 2]})
+    for j, name in enumerate(CASE_ISSUERS):
+        d = panel[panel["parent_name"] == name].sort_values("month")
+        t = d["month"].dt.to_timestamp()
+        top, bot = axes[0, j], axes[1, j]
+        for ax in (top, bot):
+            _style(ax)
+        top.axhline(0, color=INK2, linewidth=0.8)
+        top.plot(t, d["basis"], color=SUKUK_C, linewidth=2)
+        bot.plot(t, d["cds"], color=CONV_C, linewidth=2)
+        top.set_title(f"{name.split(',')[0]}: basis (bp)", fontsize=10, color=INK, loc="left")
+        bot.set_title("Government 5y CDS (bp)", fontsize=9, color=INK2, loc="left")
+    fig.suptitle("Within issuers: the sukuk discount widens when the government's CDS rises (Bahrain, Oman); "
+                 "KSA's CDS barely moves", fontsize=10.5, color=INK, x=0.01, ha="left")
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    fig.savefig(out, dpi=160, facecolor=SURFACE)
+    plt.close(fig)
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--session", choices=["desktop", "platform"], help="pull/refresh sovereign CDS first")
     p.add_argument("--data", type=Path, default=C.DATA_DIR / "USD")
+    p.add_argument("--draws", type=int, default=9999, help="wild cluster bootstrap draws")
     a = p.parse_args(argv)
     C.setup_logging("run_credit")
 
@@ -78,9 +112,30 @@ def main(argv=None) -> int:
     ust = pd.read_parquet(C.TWIN["ust_curve_path"]).astype(float).sort_index()
 
     panel = build_panel(basis, bonds, cds, ust)
-    within = within_issuer(panel)
+    within = within_issuer(panel, B=a.draws)
     iss, xs = cross_issuer(panel)
     loo = leave_one_sovereign_out(panel, iss)
+    slopes = issuer_slopes(panel)
+    slopes.to_csv(out / "credit_issuer_slopes.csv", index=False)
+    chart_case_studies(panel, out / "credit_case_studies.png")
+
+    # Level result across issuers: every issuer's mean basis, and the sub-IG gap with a wild bootstrap
+    ratings = issuer_ratings(uni, panel["parent_key"].unique())
+    ratings["sub_ig_oman"] = ratings["sub_ig"].where(ratings["parent_key"] != "oman sultanate", True)
+    lv = iss.merge(ratings[["parent_key", "rating_snapshot", "sub_ig_oman"]], on="parent_key", how="left")
+    lv["government"] = lv["cds_sovereign"].fillna(lv["parent_name"])
+    n_neg, n_all = int((lv["basis"] < 0).sum()), int(lv["basis"].notna().sum())
+    gov_means = lv.groupby("government")["basis"].mean()
+    lvd = lv.dropna(subset=["sub_ig_oman"]).assign(sub=lambda x: x["sub_ig_oman"].astype(float))
+    gap = wild_cluster_bootstrap("basis ~ sub", lvd, "sub", "government", B=a.draws)
+    sub_mean = lvd.loc[lvd["sub"] == 1, "basis"].mean()
+    ig_mean = lvd.loc[lvd["sub"] == 0, "basis"].mean()
+    case = slopes.set_index("issuer")
+    pd.DataFrame([{"issuers": n_all, "issuers_negative": n_neg, "governments": len(gov_means),
+                   "governments_negative": int((gov_means < 0).sum()), "sub_ig_mean_bp": round(sub_mean, 1),
+                   "ig_mean_bp": round(ig_mean, 1), "gap_bp": round(gap["coef"], 1),
+                   "p_wild_government": round(gap["p_wild"], 3), "clusters": gap["clusters"]}]).to_csv(
+        out / "credit_level_gap.csv", index=False)
     loo.to_csv(out / "credit_leave_one_out.csv", index=False)
     panel.assign(month=panel["month"].astype(str)).to_csv(out / "credit_panel_issuer_month.csv", index=False)
     within.to_csv(out / "credit_within_issuer.csv", index=False)
@@ -89,9 +144,41 @@ def main(argv=None) -> int:
     chart_cross_issuer(iss, out / "credit_cross_issuer.png")
 
     cov = (cds.astype(float).apply(lambda s: f"{s.first_valid_index():%Y-%m}" if s.notna().any() else "none"))
+    main_row = within[within["model"] == "Sovereign CDS + liquidity gap"].iloc[0]
+
+    def case_line(name: str) -> str:
+        if name not in case.index:
+            return f"- {name}: not enough months."
+        r = case.loc[name]
+        return (f"- **{name.split(',')[0]}** (CDS range {r.cds_range_bp:.0f}bp over {r.months} months): "
+                f"{r.slope_levels_per_100bp:+.1f}bp per 100bp in levels (Newey-West t {r.t_nw_levels:.1f}), "
+                f"{r.slope_changes_per_100bp:+.1f}bp in monthly changes (t {r.t_nw_changes:.1f}).")
+
     L = ["# Credit stress and the sukuk discount\n",
          f"Generated {date.today():%Y-%m-%d}. Issuer-month panel from the twin-curve basis.\n",
-         "## Data\n",
+         "## What the evidence supports\n",
+         "The claim rests on three pieces, in this order of strength:\n",
+         f"1. **Level, across issuers.** {n_neg} of {n_all} issuers have a negative mean basis, and the "
+         f"average is negative for every one of the {len(gov_means)} governments (or government groups). "
+         f"Sub-investment-grade issuers (Bahrain, BAPCO, Sharjah, Oman Electricity Transmission, and the Oman "
+         f"sovereign, which was sub-IG for most of the sample) average {sub_mean:.0f}bp against {ig_mean:.0f}bp for "
+         f"investment-grade issuers: a gap of {gap['coef']:.0f}bp, wild cluster bootstrap p = {gap['p_wild']:.3f} "
+         f"clustering by government ({gap['clusters']} clusters).",
+         "2. **Case studies within issuers.** The two governments whose CDS moved most show the discount "
+         "widening as credit risk rises, in levels and in monthly changes:",
+         case_line("Oman, Sultanate of (Government)"), case_line("Bahrain, Kingdom of (Government)"),
+         case_line("BAPCO Energies BSCC Closed"),
+         "   Issuers whose CDS moved less than about 100bp give noisy slopes of both signs (issuer table below).",
+         f"3. **Panel slope (supporting only).** Pooling all issuers gives {main_row.slope_per_100bp:+.1f}bp per "
+         f"100bp (issuer-clustered t {main_row.t_cluster_issuer:.1f}), but the restricted wild cluster bootstrap "
+         f"gives p = {main_row.p_wild_government:.2f} clustering by government and p = {main_row.p_wild_issuer:.2f} "
+         "by issuer. With only six independent CDS series, the pooled panel is not significant on its own and "
+         "should not be cited as the main evidence.\n",
+         "![case studies](credit_case_studies.png)\n",
+         "## Issuer-by-issuer slopes\n",
+         "Time-series regression of the issuer's monthly basis on its government's CDS (per 100bp), Newey-West "
+         "t-stats (6 lags in levels, 3 in monthly changes). Sorted by how far CDS moved.\n\n", _md(slopes),
+         "\n## Data\n",
          "- **Basis:** twin-curve basis (sukuk yield minus same-maturity conventional yield, bp), issuer-month mean.",
          "- **Credit measure:** sovereign 5y USD CDS (`MID_SPREAD`) of the issuer's government. CDS comes from "
          "outside the bond data, so noise in the conventional yield cannot feed both sides of the regression "
@@ -104,12 +191,15 @@ def main(argv=None) -> int:
          "- **Liquidity gap:** sukuk minus conventional median bid-ask spread (bp of yield) for the issuer-month. "
          "It controls for the alternative explanation that sukuk simply trade less.",
          "- **Inference:** issuer fixed effects; t-stats clustered by issuer and Driscoll-Kraay (robust to "
-         "common monthly shocks). With about 16 issuers, read t-stats near 2 with care.\n",
+         f"common monthly shocks), plus restricted wild cluster bootstrap p-values (Webb weights, {a.draws:,} "
+         "draws) by government and by issuer. Issuers without a sovereign CDS form their own government "
+         "cluster.\n",
          "## Across issuers: is the discount bigger for weaker credits?\n",
          "![cross issuer](credit_cross_issuer.png)\n",
          _md(xs),
-         "\n## Within issuers over time: does the discount widen when credit risk rises?\n",
-         "Slope = change in basis (bp) per 100bp rise in the credit measure.\n\n",
+         "\n## Panel regressions within issuers\n",
+         "Slope = change in basis (bp) per 100bp rise in the credit measure. Compare the clustered t-stats with "
+         "the wild bootstrap p-values: the gap shows how much the conventional t-stats overstate precision.\n\n",
          _md(within),
          "\n## Robustness: leave one government out\n",
          "Issuers that share a government share its CDS series, so there are only six independent credit "
@@ -117,8 +207,9 @@ def main(argv=None) -> int:
          "errors by government (very few clusters, so conservative and approximate).\n\n",
          _md(loo),
          "\n## Reading the results\n",
-         "- **Within issuers (main result):** the slope is stable whichever government is dropped. Its "
-         "precision leans on Oman, whose CDS ranged most widely.",
+         "- **Within issuers:** the pooled slope is stable whichever government is dropped, but its precision "
+         "leans on Oman, whose CDS ranged most widely, and the government-level bootstrap does not reject zero. "
+         "That is why the case studies, not the panel t-stat, carry the within-issuer claim.",
          "- **Across issuers:** the cross-sectional slope depends on Bahrain (sovereign and BAPCO). Without it "
          "there is no gradient among issuers with CDS below about 100bp. Describe the cross-section as a "
          "threshold (large discounts for the sub-investment-grade sovereigns, small elsewhere), not a "

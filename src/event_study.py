@@ -24,6 +24,7 @@ import pandas as pd
 from .config import TWIN
 
 VARS = {"d_basis": "basis_bp", "d_sukuk": "y_sukuk", "d_conv": "y_conv"}
+MDE_MULT = 1.959964 + 0.841621   # z(0.975) + z(0.80): normal-approximation minimum detectable effect
 
 
 def _event_time(dates: pd.Series, event_date: pd.Timestamp) -> np.ndarray:
@@ -206,8 +207,11 @@ def placebo_test(observed: pd.DataFrame, placebo_ev: pd.DataFrame, shock_bins, v
         o = float(obs.iloc[0]) if len(obs) else np.nan
         centred = sims - sims.mean()
         p = float((np.abs(centred) >= abs(o - sims.mean())).mean()) if not np.isnan(o) else np.nan
+        sd = float(sims.std(ddof=1))
         rows.append({"tau": tau, f"{var}_p05": np.percentile(sims, 5), f"{var}_p95": np.percentile(sims, 95),
-                     f"{var}_placebo_p": p})
+                     f"{var}_placebo_p": p, f"{var}_placebo_sd": sd,
+                     # smallest true effect detected with 80% power by a two-sided 5% test on this statistic
+                     f"{var}_mde80": MDE_MULT * sd})
     return pd.DataFrame(rows)
 
 

@@ -40,3 +40,20 @@ data/**
 !data/USD/analysis/drivers/*.png
 !data/USD/analysis/drivers/drivers_within_issuer.csv
 !data/market/oil_shocks_*.csv
+!data/USD/analysis/synthesis.md
+!data/USD/analysis/synthesis_*.csv
+!data/USD/analysis/credit/credit_issuer_slopes.csv
+!data/USD/analysis/credit/credit_level_gap.csv
+!data/USD/analysis/mechanism/mechanism_results.md
+!data/USD/analysis/mechanism/*.png
+!data/USD/analysis/mechanism/mechanism_*.csv
+!data/USD/analysis/oil_credit/oil_credit_results.md
+!data/USD/analysis/oil_credit/oil_*.csv
+!data/USD/analysis/policy/policy_results.md
+!data/USD/analysis/policy/*.png
+!data/USD/analysis/policy/policy_*.csv
+!data/USD/analysis/data_quality/data_quality_results.md
+!data/USD/analysis/data_quality/dq_*.csv
+
+# local working notes, not part of the repository
+NEXT_PROMPT.md

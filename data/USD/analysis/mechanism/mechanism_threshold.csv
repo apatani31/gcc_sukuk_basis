@@ -1,0 +1,9 @@
+model,term,coef_bp,t_cluster_issuer,n_obs,issuers,p_wild_government,p_wild_issuer,note
+Across issuers: basis ~ sub-IG dummy (snapshot ratings),sub_ig_i,-40.01,-2.27,17,17,0.273,0.108,
+Across issuers: basis ~ sub-IG dummy (Oman sovereign counted as sub-IG),sub_ig_oman_i,-44.98,-3.18,17,17,0.019,0.033,
+"Across issuers: basis ~ CDS (linear, for comparison)",cds100,-25.57,-2.92,16,16,0.285,0.133,
+"Within issuers: CDS slope, investment grade",cds100,3.42,0.42,795,15,0.339,0.635,
+Within issuers: extra CDS slope for sub-IG (Oman counted sub-IG),cds100:sub_ig_oman_i,-27.92,-3.02,795,15,0.185,0.063,
+"Across issuers incl. Dubai govt: spline, extra slope above best kink (150bp)",h,-115.41,-2.41,16,16,0.244,0.171,kink chosen on the grid (search not reflected in p-values)
+"Across issuers excl. Dubai govt: spline, extra slope above best kink (70bp)",h,-57.17,-3.09,15,15,0.017,0.017,kink chosen on the grid (search not reflected in p-values)
+"Within issuers: spline, extra slope above best kink (170bp)",h,-43.29,-2.46,850,16,0.059,0.016,kink chosen on the grid (search not reflected in p-values)

@@ -1,0 +1,5 @@
+group,price_source,bonds,unchanged_mid_share,ar1_yield_change
+Conventional,Composite / other,147,0.007,-0.0
+Conventional,Tradeweb =TE,39,0.092,-0.119
+Sukuk,Composite / other,70,0.079,-0.095
+Sukuk,Tradeweb =TE,14,0.076,-0.157
