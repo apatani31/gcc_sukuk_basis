@@ -1,6 +1,6 @@
 # GCC sukuk vs conventional bonds: synthesis
 
-Generated 2026-10-29. Every number below is read from a stage report's CSV output.
+Generated 2026-11-01. Every number below is read from a stage report's CSV output.
 
 ## Headline numbers
 
@@ -10,8 +10,8 @@ Generated 2026-10-29. Every number below is read from a stage report's CSV outpu
    *A threshold, not a smooth gradient: investment-grade issuers get single-digit discounts.*
 3. **Within the weakest sovereigns, the discount moves with credit risk.** Oman -21.5bp and Bahrain -19.2bp per 100bp of CDS (Newey-West t -4.0, -3.0); also in monthly changes (-50.0, -21.2). For investment-grade issuers the within slope is +3.4bp.
    *The pooled panel slope (-22.0bp) is not significant on its own once only six CDS series are counted (wild bootstrap p = 0.287); the case studies carry the claim.*
-4. **The discount exists at issue, not only in secondary quotes.** Weak-credit sukuk priced a median -39.7bp against their issuer's conventional curve at issue, vs +19.8bp for the same issuers' new conventional bonds and -1.7bp for other issuers' sukuk; issuer-level correlation with the secondary basis 0.78.
-   *Stale secondary quotes cannot explain a discount that is already there on the pricing date.*
+4. **The discount exists at issue, not only in secondary quotes.** Classifying each deal by its government's rating at pricing (MAIN rule: two of three agencies below BBB-/Baa3), weak-credit sukuk priced a median -55.2bp against their issuer's conventional curve (n = 15), vs +18.6bp for weak-credit conventional deals (n = 23) and -3.0bp for other issuers' sukuk: a sukuk-minus-conventional gap of -73.9bp (robustness range -65.8 to -42.1bp). Issuer-level correlation with the secondary basis 0.78.
+   *Stale secondary quotes cannot explain a discount that is already there on the pricing date. Under MAIN almost all weak-credit sukuk are Bahraini (14 of 15); the lowest-rating and spread rules, which keep more non-Bahraini deals, give the same sign without Bahrain.*
 5. **Sukuk quotes are somewhat stale, but that is not the story.** Unchanged mid price on 7.9% of days for sukuk vs 1.5% for conventionals; sukuk absorb 0.47 of a conventional move on the day and 0.62 within a week (weak credits 0.56, KSA 0.89); 46% of the pooled same-month CDS effect reverses within six months (Bahrain: no reversal).
    *Even after 120 business days sukuk move 0.83bp per conventional bp: damping is real, and stale quotes explain only part of the monthly CDS response.*
 6. **Mechanism: tenor and buy-and-hold demand, with modest evidence.** Holm-adjusted p-values across the four mechanism tests (government-clustered wild bootstrap): CDS slope steepens by -2.1bp per 100bp per year of maturity (p 0.138); less liquid sukuk price richer, -0.81bp per bp of bid-ask gap (p 0.076); CDS x interbank spread -0.10 per bp (p 0.626); CDS x Ijara +10.9 (p 0.718), a low-power test because only 10 of the 68 twin sukuk are Ijara (43 are Hybrid).
@@ -42,7 +42,7 @@ Generated 2026-10-29. Every number below is read from a stage report's CSV outpu
 | Liquidity gap | -0.81bp per bp | wild p = 0.019; Holm-adjusted 0.076 | mechanism_results.md |
 | CDS x Ijara (low power: few Ijara sukuk) | +10.9 per 100bp | wild p = 0.718; Holm-adjusted 0.718 | mechanism_results.md |
 | CDS x interbank spread | -0.10 per 100bp per bp | wild p = 0.313; Holm-adjusted 0.626 | mechanism_results.md |
-| New-issue premium, weak-credit sukuk minus conventional | -59.5bp (medians) | 21 sukuk, 29 conventional | data_quality_results.md |
+| New-issue premium, weak-credit sukuk minus conventional (MAIN: 2 of 3 agencies below IG at pricing) | -73.9bp (medians) | 15 sukuk, 23 conventional; Welch t -5.6 vs other sukuk; robustness range -65.8 to -42.1bp (lowest rating, spread > 150bp, MAIN without Bahrain with n = 1 sukuk) | data_quality_results.md |
 | Oil-price rise, basis at +5 days (median) | +0.6bp | MDE80 3.1bp | event_study.md |
 | Implied via CDS, +5 days | +0.71bp | 90% CI [-0.82, 2.77] | oil_credit_results.md |
 

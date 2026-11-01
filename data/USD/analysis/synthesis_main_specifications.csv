@@ -16,6 +16,6 @@ CDS x remaining maturity,-2.09 per 100bp per year,wild p = 0.046; Holm-adjusted 
 Liquidity gap,-0.81bp per bp,wild p = 0.019; Holm-adjusted 0.076,mechanism_results.md
 CDS x Ijara (low power: few Ijara sukuk),+10.9 per 100bp,wild p = 0.718; Holm-adjusted 0.718,mechanism_results.md
 CDS x interbank spread,-0.10 per 100bp per bp,wild p = 0.313; Holm-adjusted 0.626,mechanism_results.md
-"New-issue premium, weak-credit sukuk minus conventional",-59.5bp (medians),"21 sukuk, 29 conventional",data_quality_results.md
+"New-issue premium, weak-credit sukuk minus conventional (MAIN: 2 of 3 agencies below IG at pricing)",-73.9bp (medians),"15 sukuk, 23 conventional; Welch t -5.6 vs other sukuk; robustness range -65.8 to -42.1bp (lowest rating, spread > 150bp, MAIN without Bahrain with n = 1 sukuk)",data_quality_results.md
 "Oil-price rise, basis at +5 days (median)",+0.6bp,MDE80 3.1bp,event_study.md
 "Implied via CDS, +5 days",+0.71bp,"90% CI [-0.82, 2.77]",oil_credit_results.md

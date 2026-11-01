@@ -96,6 +96,27 @@ def monthly_status(ratings: pd.DataFrame, months: pd.PeriodIndex) -> pd.DataFram
     return pd.concat(rows, ignore_index=True)
 
 
+def status_at(ratings: pd.DataFrame, government: str, when: pd.Timestamp) -> dict:
+    """Rating status of `government` on a given day (deal reference date).
+
+    Uses each agency's last row dated on or before `when` (rows dated later are ignored). NR rows
+    mean the agency does not rate the government. Returns agencies rating, agencies below IG, and:
+      sub_main   - MAIN rule: at least 2 below; where only 2 agencies rate, both; where 1, that one;
+      sub_lowest - Robustness A: the lowest available rating is below IG.
+    Both are NaN when no agency rates the government (or it has no rows)."""
+    g = ratings[(ratings["government"] == government) & (ratings["date"] <= when)]
+    last = g.sort_values("date").groupby("agency").tail(1)
+    rated = last[last["sub_ig"].map(lambda v: v is not None and not pd.isna(v))]
+    n_rated = len(rated)
+    n_below = int(rated["sub_ig"].astype(bool).sum()) if n_rated else 0
+    if n_rated == 0:
+        main = lowest = np.nan
+    else:
+        main = float(n_below >= 2) if n_rated >= 2 else float(n_below == 1)
+        lowest = float(n_below >= 1)
+    return {"agencies_rating": n_rated, "agencies_below_ig": n_below, "sub_main": main, "sub_lowest": lowest}
+
+
 def template(path: Path, oman_known: list[tuple[str, str, str]]) -> None:
     """Write a fill-in template: one row per government x agency for the start-of-sample rating, plus
     the known Oman actions supplied by the user."""

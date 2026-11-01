@@ -218,6 +218,21 @@ SOVEREIGN_RATINGS_PATH = DATA_DIR / "market" / "sovereign_ratings.csv"
 OMAN_UPGRADES = [("S&P", "2024-09", "BBB-"), ("Moody's", "2025-07", "Baa3"), ("Fitch", "2025-12", "BBB-")]
 CDS_SUB_IG_BP = 150.0   # CDS-based alternative: an obligor-month is "sub-IG" if its government's CDS > 150bp
 
+# Primary-market check (run_data_quality.py section d): how new deals are classified as weak credit at
+# their reference date (the curve date, a proxy for the pricing date). MAIN was fixed before results.
+PRIMARY_MARKET = {
+    "rules": {
+        "MAIN": "2 of 3 agencies below BBB-/Baa3 (both if only two rate; the one if only one rates)",
+        "Robustness A": "lowest available rating below BBB-/Baa3",
+        "Robustness B": "credit spread above the threshold: government 5y CDS, else the issuer's "
+                        "conventional spread over US Treasuries at the deal's maturity",
+        "Legacy": "fixed list (Bahrain, Oman, BAPCO, Sharjah) for the whole sample, comparison only",
+    },
+    "spread_threshold_bp": 150.0,
+    "cds_max_staleness_days": 10,   # use the last CDS print within this many days before the reference date
+    "legacy_weak": ["bahrain kingdom", "oman sultanate", "bapco energies", "emirate sharjah"],
+}
+
 
 @dataclass
 class RunConfig:

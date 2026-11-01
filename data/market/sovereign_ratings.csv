@@ -1,0 +1,90 @@
+government,agency,date,rating,source
+Oman,S&P,2016-01-01,BBB+,TradingEconomics table
+Oman,Moody's,2016-01-01,A1,Countryeconomy table
+Bahrain,S&P,2016-01-01,BBB-,Countryeconomy table
+Bahrain,Moody's,2016-01-01,Baa3,Gulf News
+Bahrain,Fitch,2016-01-01,BBB-,Countryeconomy table
+Sharjah,S&P,2016-01-01,A,Sharjah Update
+Sharjah,Moody's,2016-01-01,A3,The National
+KSA,S&P,2016-01-01,A+,Countryeconomy table
+KSA,Moody's,2016-01-01,Aa3,Countryeconomy table
+KSA,Fitch,2016-01-01,AA,Countryeconomy table
+Qatar,S&P,2016-01-01,AA,Countryeconomy table
+Qatar,Moody's,2016-01-01,Aa2,Countryeconomy table
+Qatar,Fitch,2016-01-01,AA,Countryeconomy table
+Abu Dhabi,S&P,2016-01-01,AA,The National
+Abu Dhabi,Moody's,2016-01-01,Aa2,Gulf News
+Abu Dhabi,Fitch,2016-01-01,AA,The National
+Dubai,S&P,2016-01-01,BBB+,DEWA proxy; Arab News
+Dubai,Moody's,2016-01-01,Baa2,DEWA proxy; Moody's release
+Kuwait,S&P,2016-01-01,AA,Countryeconomy table
+Kuwait,Moody's,2016-01-01,Aa2,Countryeconomy table
+Kuwait,Fitch,2016-01-01,AA,Countryeconomy table
+Oman,S&P,2016-02-17,BBB-,TradingEconomics table
+Bahrain,S&P,2016-02-17,BB,Countryeconomy table
+KSA,S&P,2016-02-17,A-,Countryeconomy table
+Oman,Moody's,2016-02-26,A3,Countryeconomy table
+Bahrain,Moody's,2016-03-04,Ba1,Countryeconomy table
+KSA,Fitch,2016-04-12,AA-,Countryeconomy table
+Oman,Moody's,2016-05-14,Baa1,Countryeconomy table
+Bahrain,Moody's,2016-05-14,Ba2,Countryeconomy table
+KSA,Moody's,2016-05-14,A1,Countryeconomy table
+Bahrain,Fitch,2016-06-28,BB+,Gulf News
+Bahrain,S&P,2016-12-09,BB-,Countryeconomy table
+Oman,Fitch,2017-01-03,BBB,Countryeconomy table
+Sharjah,S&P,2017-01-27,BBB+,Gulf News
+KSA,Fitch,2017-03-22,A+,Countryeconomy table
+Oman,S&P,2017-05-12,BB+,TradingEconomics table
+Qatar,Moody's,2017-05-26,Aa3,Countryeconomy table
+Qatar,S&P,2017-06-07,AA-,Countryeconomy table
+Oman,Moody's,2017-07-28,Baa2,Arab News
+Bahrain,Moody's,2017-07-28,B1,Arab News
+Qatar,Fitch,2017-08-28,AA-,Countryeconomy table
+Oman,S&P,2017-11-10,BB,TradingEconomics table
+Bahrain,S&P,2017-12-01,B+,Countryeconomy table
+Oman,Fitch,2017-12-11,BBB-,Countryeconomy table
+Bahrain,Fitch,2018-03-01,BB-,Countryeconomy table
+Oman,Moody's,2018-03-16,Baa3,Countryeconomy table
+Bahrain,Moody's,2018-08-03,B2,Gulf News
+Dubai,S&P,2018-09-05,BBB,DEWA proxy; Arab News
+Oman,Fitch,2018-12-18,BB+,EMTA table
+Oman,Moody's,2019-03-05,Ba1,Countryeconomy table
+KSA,Fitch,2019-09-30,A,Countryeconomy table
+Sharjah,S&P,2020-02-14,BBB,Reuters news
+Sharjah,Moody's,2020-02-18,Baa2,Zawya news
+Oman,Moody's,2020-03-05,Ba2,Countryeconomy table
+Oman,Fitch,2020-03-12,BB,Countryeconomy table
+Oman,S&P,2020-03-26,BB-,TradingEconomics table
+Kuwait,S&P,2020-03-26,AA-,Countryeconomy table
+Dubai,Moody's,2020-04-29,Baa2,DEWA proxy; Reuters news
+Oman,Moody's,2020-06-23,Ba3,Countryeconomy table
+Bahrain,Fitch,2020-08-14,B+,Countryeconomy table
+Oman,Fitch,2020-08-17,BB-,FXEmpire table
+Kuwait,Moody's,2020-09-22,A1,Gulf News
+Oman,S&P,2020-10-16,B+,TradingEconomics table
+Sharjah,S&P,2020-10-23,BBB-,Sharjah prospectus
+Sharjah,Moody's,2021-02-11,Baa3,Moody's release
+Kuwait,S&P,2021-07-16,A+,Countryeconomy table
+Kuwait,Fitch,2022-01-27,AA-,Countryeconomy table
+Oman,S&P,2022-04-01,BB-,EMTA table
+Sharjah,Moody's,2022-07-19,Ba1,Forbes news
+Oman,Fitch,2022-08-15,BB,EMTA table
+Qatar,S&P,2022-11-04,AA,Countryeconomy table
+Oman,S&P,2022-11-25,BB,TradingEconomics table
+KSA,S&P,2023-03-17,A,Countryeconomy table
+KSA,Fitch,2023-04-05,A+,Countryeconomy table
+Oman,Moody's,2023-05-15,Ba2,Countryeconomy table
+Oman,Fitch,2023-09-25,BB+,Fitch release
+Oman,S&P,2023-09-29,BB+,TradingEconomics table
+Oman,Moody's,2023-12-07,Ba1,Countryeconomy table
+Qatar,Moody's,2024-01-25,Aa2,Countryeconomy table
+Qatar,Fitch,2024-03-20,AA,Al Jazeera
+Dubai,Moody's,2024-05-29,A3,DEWA proxy; DFM disclosure
+Oman,S&P,2024-09-27,BBB-,MoF statement
+KSA,Moody's,2024-11-22,Aa3,Countryeconomy table
+KSA,S&P,2025-03-14,A+,Countryeconomy table
+Oman,Moody's,2025-07-10,Baa3,Countryeconomy table
+Bahrain,S&P,2025-11-21,B,Bloomberg news
+Kuwait,S&P,2025-11-21,AA-,Countryeconomy table
+Oman,Fitch,2025-12-08,BBB-,Fitch release
+Bahrain,Fitch,2026-02-23,B,TradingView news

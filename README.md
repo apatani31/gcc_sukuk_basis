@@ -185,6 +185,84 @@ Run after the stages above (all offline except the one-off Kuwait CDS pull):
 Inference with few clusters uses a restricted wild cluster bootstrap (Webb
 weights, `src/inference.py`). Start with `data/USD/analysis/synthesis.md`.
 
+## Primary-market check: the new-issue premium
+
+`run_data_quality.py` (section d, `new_issue_premia` in `src/data_quality.py`)
+tests whether the sukuk discount exists in actual transactions, not only in
+secondary quotes. For each new fixed-rate bond of a twin issuer:
+
+```
+NIP (bp) = 10,000 x [ yield at issue - issuer's conventional curve at the new bond's maturity, read on day d ]
+d = last trading day at least 5 business days before the issue date (searching up to 10 further business days back)
+```
+
+The curve uses the same matching rules as `twin.py` (interpolation, or the
+US Treasury-adjusted nearest bond within 1 year) and only conventional bonds
+already trading on day d, so a new conventional bond is compared with the
+issuer's *other* conventional bonds. Measuring new conventional bonds the same
+way nets out the ordinary concession every new deal pays. Deals more than 300bp
+off the curve (for example 1% official placements) are flagged off-market and
+excluded.
+
+**Why 5 business days before the issue date.** The export's issue date is the
+settlement date. USD Eurobonds and sukuk are priced (books closed, final yield
+set) several business days before they settle, typically around a week. The
+benchmark has to be the curve *before* the deal is priced, for three reasons:
+
+1. **The deal moves the issuer's own curve.** Once a mandate is announced and
+   books open, the issuer's outstanding bonds often reprice (they cheapen to make
+   room for the new supply, then retrace). A curve read on the settlement date
+   already contains that reaction, which would shrink the measured premium.
+2. **The new bond must not be in its own benchmark.** After pricing, the new
+   bond (or when-issued quotes for it) can start appearing in the price data.
+   Reading the curve on or after the pricing date risks comparing the bond with
+   itself.
+3. **The yield at issue is fixed at pricing, not settlement.** It is computed
+   from coupon and issue price, which are set on the pricing day, so the
+   comparison curve should be from the same moment or just before it.
+
+Five business days is a practical stand-in for "before pricing", because the
+export has no pricing or announcement date. It is a compromise: earlier is
+cleaner (no deal effect) but lets unrelated market moves accumulate between the
+curve date and pricing; later is closer in time but risks catching the deal.
+
+**Which deals count as weak credit.** The comparison of interest is weak-credit
+sukuk against weak-credit conventional deals and against other issuers' sukuk.
+"Weak credit" is decided deal by deal, at the deal's **reference date**: the
+curve date d above, used as a proxy for the pricing date. Each issuer takes its
+government's rating (`ISSUER_GOVERNMENT` in `src/ratings.py`: BAPCO and Bahrain;
+Oman Electricity Transmission and Oman; Aramco, PIF, SNB, BSF and KSA; DP World,
+ICD, DAE and Dubai, whose rows are the DEWA proxy; FAB, Mamoura and Abu Dhabi).
+Only rating rows dated on or before the reference date are used; each agency's
+last rating is carried forward. Three rules (`PRIMARY_MARKET` in
+`src/config.py`):
+
+| Rule | Weak credit when |
+|---|---|
+| **MAIN** (chosen before seeing the results, reported first) | at least two of S&P, Moody's and Fitch rate the government below BBB-/Baa3; where only two agencies rate it, both must; where only one, that one decides |
+| Robustness A | the lowest available rating is below BBB-/Baa3 |
+| Robustness B | the credit spread on the reference date is above 150bp: the government's 5y CDS where it exists, otherwise (Sharjah) the issuer's conventional curve yield at the deal's maturity minus the US Treasury yield at that maturity |
+
+The report also shows MAIN with Bahrain (government and BAPCO) excluded, and a
+**Legacy** row using the old fixed list (Bahrain, Oman, BAPCO, Sharjah for the
+whole sample), kept only for comparison together with a count of the deals that
+change classification. The fixed list was dropped because it ignored rating
+changes: Oman regained investment grade in 2024-2025 (its October 2025 sukuk is
+investment grade under MAIN), Sharjah is never below investment grade at two
+agencies (Fitch does not rate it), and Oman Electricity Transmission was left
+out. The multilateral Arab Energy Fund has no government rating, so the rating
+rules leave its deals unclassified. The weak-credit rows of the staleness,
+lead-lag and reversal tables in the same report use MAIN at the issuer-month
+level.
+
+**Caveats.** If a deal settled more than 5 business days after pricing, or was
+pre-marketed (mandate and investor calls) well before pricing, the curve may
+already reflect it. Yields at issue are computed (30/360, settlement on the
+issue date), not taken from deal documents. Checking a sample of deals against
+their announced pricing date and reoffer yield, and re-running with other leads
+(for example 2, 10 and 20 business days via `lead_bdays`), would test how much
+the choice matters.
+
 ## Design decisions and data caveats
 
 - **Scope.** About 75% of conventional rows are CDs and commercial paper. They

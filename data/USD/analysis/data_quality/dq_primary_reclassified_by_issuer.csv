@@ -1,0 +1,15 @@
+rule,issuer,deals,weak_to_other,other_to_weak,unclassified
+MAIN,APICORP Sukuk Ltd,2,0,0,2
+MAIN,Arab Energy Fund,8,0,0,8
+MAIN,Oman Sovereign Sukuk SAOC,3,2,0,0
+MAIN,"Oman, Sultanate of (Government)",8,3,0,0
+MAIN,Sharjah Sukuk Programme Ltd,4,4,0,0
+MAIN,"Sharjah, Emirate of",3,3,0,0
+Robustness A,APICORP Sukuk Ltd,2,0,0,2
+Robustness A,Al Jawaher Assets Company SPC,1,0,1,0
+Robustness A,Arab Energy Fund,8,0,0,8
+Robustness A,"Oman, Sultanate of (Government)",8,1,0,0
+Robustness A,"Sharjah, Emirate of",3,1,0,0
+Robustness B,Oman Sovereign Sukuk SAOC,3,1,0,0
+Robustness B,"Saudi Arabia, Kingdom of (Government)",23,0,2,0
+Robustness B,Sharjah Sukuk Programme Ltd,4,1,0,0

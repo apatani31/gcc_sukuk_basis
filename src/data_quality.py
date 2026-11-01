@@ -33,7 +33,38 @@ def read_series(timeseries_dir, ids, fields, start: str) -> pd.DataFrame:
 
 
 def staleness(timeseries_dir, bonds: pd.DataFrame, coverage: pd.DataFrame, start: str = "2019-01-01",
-              min_days: int = 100) -> tuple[pd.DataFrame, pd.DataFrame]:
+              min_days: int = 100, status: pd.DataFrame | None = None, min_days_split: int = 60):
+    """Per-bond staleness metrics and their medians by sukuk/conventional.
+
+    With `status` (parent_key, month 'YYYY-MM', sub_main), also returns a third table that splits each
+    bond's days by its issuer-month credit status (weak credit = sub-IG under the MAIN rule that month);
+    daily changes are computed on the full series before the split."""
+    summ, r, w = _staleness_core(timeseries_dir, bonds, coverage, start, min_days)
+    if status is None:
+        return summ, r
+    w = w.merge(bonds[["instrument_id", "parent_key", "is_sukuk"]], on="instrument_id")
+    w["month"] = w["date"].dt.strftime("%Y-%m")
+    w = w.merge(status, on=["parent_key", "month"], how="left").dropna(subset=["sub_main"])
+    rows = []
+    for (k, s), b in w.groupby(["instrument_id", "sub_main"]):
+        if len(b) < min_days_split:
+            continue
+        rows.append({"instrument_id": k, "is_sukuk": b["is_sukuk"].iat[0], "weak": bool(s),
+                     "unchanged_mid_share": b["dmid"].eq(0).mean(),
+                     "bid_ask_cents_median": ((b["ask_price"] - b["bid_price"]) * 100).median(),
+                     "ar1_daily_yield_change": b["dy"].autocorr()})
+    x = pd.DataFrame(rows)
+    by_credit = (x.assign(group=x["is_sukuk"].map({True: "Sukuk", False: "Conventional"}),
+                          credit=x["weak"].map({True: "Weak credit (sub-IG month, MAIN)", False: "Other"}))
+                 .groupby(["credit", "group"]).agg(bond_segments=("instrument_id", "size"),
+                                                   unchanged_mid_share=("unchanged_mid_share", "median"),
+                                                   bid_ask_cents=("bid_ask_cents_median", "median"),
+                                                   ar1_yield_change=("ar1_daily_yield_change", "median"))
+                 .round(3).reset_index())
+    return summ, r, by_credit
+
+
+def _staleness_core(timeseries_dir, bonds: pd.DataFrame, coverage: pd.DataFrame, start: str, min_days: int):
     ids = bonds["instrument_id"].tolist()
     t = read_series(timeseries_dir, ids, ["mid_price", "bid_price", "ask_price", "mid_yield", "bid_yield",
                                           "ask_yield"], start)
@@ -46,6 +77,8 @@ def staleness(timeseries_dir, bonds: pd.DataFrame, coverage: pd.DataFrame, start
         w[["mid_price", "bid_price", "ask_price", "mid_yield", "bid_yield", "ask_yield"]].astype(float)
     w["mid"] = w["mid_price"].fillna((w["bid_price"] + w["ask_price"]) / 2)
     w["y"] = w["mid_yield"].fillna((w["bid_yield"] + w["ask_yield"]) / 2)
+    w["dmid"] = w.groupby("instrument_id")["mid"].diff()
+    w["dy"] = w.groupby("instrument_id")["y"].diff()
     rows = []
     for k, b in w.groupby("instrument_id"):
         if len(b) < min_days:
@@ -65,7 +98,7 @@ def staleness(timeseries_dir, bonds: pd.DataFrame, coverage: pd.DataFrame, start
                                    abs_daily_change_bp=("abs_daily_yield_change_bp_median", "median"),
                                    tradeweb_share=("price_source", lambda s: (s == "Tradeweb =TE").mean()))
             .round(3).reset_index())
-    return summ, r
+    return summ, r, w
 
 
 # ---------------------------------------------------------------------------
@@ -158,7 +191,8 @@ def new_issue_premia(universe: pd.DataFrame, panel: pd.DataFrame, keys, ust: Ust
         rec = {"instrument_id": b.instrument_id, "isin": b.isin, "parent_key": b.parent_key,
                "issuer": b.issuer_name, "is_sukuk": bool(b.is_sukuk), "issue_date": b.issue_date,
                "tenor_at_issue": (b.maturity_date - b.issue_date).days / 365.25,
-               "yield_at_issue": b.yield_at_issue, "nip_bp": np.nan, "match_method": "no curve", "curve_date": pd.NaT}
+               "yield_at_issue": b.yield_at_issue, "nip_bp": np.nan, "match_method": "no curve", "curve_date": pd.NaT,
+               "curve_yield": np.nan, "curve_tau": np.nan}
         if len(c):
             day = c["date"].max()
             cc = c[c["date"] == day]
@@ -168,7 +202,8 @@ def new_issue_premia(universe: pd.DataFrame, panel: pd.DataFrame, keys, ust: Ust
             m = match_day(np.array([tau]), np.array([b.yield_at_issue]), cc["tau"].to_numpy(),
                           cc["y"].to_numpy(), TWIN, slope)
             if m and m[0][2] in TWIN["main_methods"]:
-                rec.update(nip_bp=(b.yield_at_issue - m[0][1]) * 100, match_method=m[0][2], curve_date=day)
+                rec.update(nip_bp=(b.yield_at_issue - m[0][1]) * 100, match_method=m[0][2], curve_date=day,
+                           curve_yield=m[0][1], curve_tau=tau)
             elif m:
                 rec["match_method"] = m[0][2] + " (not in main methods)"
             else:
@@ -207,3 +242,132 @@ def premium_by_issuer(nip: pd.DataFrame, cds_monthly: pd.DataFrame, issuer_sov: 
                      "cds_at_sukuk_issue_bp": round(s["cds_at_issue"].mean(), 0) if len(s) else np.nan,
                      "secondary_basis_bp": round(float(sec["mean_basis_bp"].iloc[0]), 1) if len(sec) else np.nan})
     return pd.DataFrame(rows).sort_values("sukuk_nip_median_bp")
+
+
+# ---------------------------------------------------------------------------
+# d (continued). Classifying deals as weak credit at their reference date
+# ---------------------------------------------------------------------------
+def classify_deals(nip: pd.DataFrame, ratings: pd.DataFrame | None, issuer_gov: dict, cds_daily: pd.DataFrame,
+                   ust: UstCurve | None, cfg: dict) -> pd.DataFrame:
+    """Add weak-credit flags (1 = weak, 0 = other, NaN = unclassifiable) under each rule.
+
+    Reference date = the curve date already used for the premium (last trading day at least lead_bdays
+    business days before the issue date), a proxy for the pricing date.
+      sub_MAIN, sub_Robustness A : sovereign rating status on the reference date (ratings.status_at)
+      sub_Robustness B           : spread_ref_bp > threshold; the government's 5y CDS (last print within
+                                   cds_max_staleness_days), else the issuer's conventional curve yield at the
+                                   deal's maturity minus the US Treasury yield at that maturity
+      sub_Legacy                 : the old fixed list
+    """
+    from .ratings import status_at
+
+    from .config import ISSUER_SOVEREIGN
+
+    n = nip.copy()
+    n["government"] = n["parent_key"].map(issuer_gov)
+    n["ref_date"] = n["curve_date"]
+    rows = []
+    cds = cds_daily.astype(float).sort_index()
+    for r in n.itertuples():
+        rec = {"sub_MAIN": np.nan, "sub_Robustness A": np.nan, "agencies_rating": np.nan,
+               "agencies_below_ig": np.nan, "spread_ref_bp": np.nan, "spread_source": ""}
+        if pd.notna(r.ref_date):
+            if ratings is not None and isinstance(r.government, str):
+                st = status_at(ratings, r.government, r.ref_date)
+                rec.update({"sub_MAIN": st["sub_main"], "sub_Robustness A": st["sub_lowest"],
+                            "agencies_rating": st["agencies_rating"], "agencies_below_ig": st["agencies_below_ig"]})
+            sov = ISSUER_SOVEREIGN.get(r.parent_key)
+            if isinstance(sov, str) and sov in cds:
+                s = cds[sov].loc[:r.ref_date].dropna()
+                if len(s) and (r.ref_date - s.index[-1]).days <= cfg["cds_max_staleness_days"]:
+                    rec.update(spread_ref_bp=float(s.iloc[-1]), spread_source=f"{sov} 5y CDS")
+            if np.isnan(rec["spread_ref_bp"]) and pd.notna(r.curve_yield) and ust is not None:
+                row = ust.row(r.ref_date)
+                if row is not None:
+                    rec.update(spread_ref_bp=(r.curve_yield - float(np.interp(r.curve_tau, *row))) * 100,
+                               spread_source="issuer conventional spread over UST")
+        rows.append(rec)
+    n = pd.concat([n.reset_index(drop=True), pd.DataFrame(rows)], axis=1)
+    n["sub_Robustness B"] = np.where(n["spread_ref_bp"].notna(),
+                                     (n["spread_ref_bp"] > cfg["spread_threshold_bp"]).astype(float), np.nan)
+    n["sub_Legacy"] = n["parent_key"].isin(cfg["legacy_weak"]).astype(float)
+    return n
+
+
+RULES = ("MAIN", "Robustness A", "Robustness B", "Legacy")
+
+
+def rule_summary(deals: pd.DataFrame, rules=RULES, exclude_gov: str = "Bahrain") -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Market deals only. Returns (group table, one-line summary per rule and sample).
+
+    Group table: rule x sample x weak/other x sukuk/conventional: bonds, mean, median.
+    Summary: weak-credit sukuk median and n, weak-credit conventional median, sukuk-minus-conventional
+    (medians), other issuers' sukuk median, Welch t of weak-credit vs other sukuk, unclassified deals."""
+    from scipy import stats
+
+    d = deals.dropna(subset=["nip_bp"])
+    d = d[~d["off_market"]] if "off_market" in d else d
+    groups, summ = [], []
+    for rule in rules:
+        col = f"sub_{rule}"
+        for sample, dd in (("All issuers", d), (f"Excluding {exclude_gov} (government and BAPCO)",
+                                                 d[d["government"] != exclude_gov])):
+            unclassified = int(dd[col].isna().sum())
+            c = dd.dropna(subset=[col])
+            for (w, s), g in c.groupby([c[col].astype(bool), "is_sukuk"]):
+                groups.append({"rule": rule, "sample": sample, "credit": "Weak credit" if w else "Other",
+                               "bond": "Sukuk" if s else "Conventional", "bonds": len(g),
+                               "mean_bp": round(g["nip_bp"].mean(), 1), "median_bp": round(g["nip_bp"].median(), 1)})
+            ws = c[(c[col] == 1) & c["is_sukuk"]]["nip_bp"]
+            wc = c[(c[col] == 1) & ~c["is_sukuk"]]["nip_bp"]
+            os_ = c[(c[col] == 0) & c["is_sukuk"]]["nip_bp"]
+            t = stats.ttest_ind(ws, os_, equal_var=False).statistic if len(ws) > 1 and len(os_) > 1 else np.nan
+            summ.append({"rule": rule, "sample": sample, "weak_sukuk_n": len(ws),
+                         "weak_sukuk_median_bp": round(ws.median(), 1) if len(ws) else np.nan,
+                         "weak_conv_n": len(wc), "weak_conv_median_bp": round(wc.median(), 1) if len(wc) else np.nan,
+                         "weak_sukuk_minus_conv_bp": round(ws.median() - wc.median(), 1) if len(ws) and len(wc) else np.nan,
+                         "other_sukuk_n": len(os_), "other_sukuk_median_bp": round(os_.median(), 1) if len(os_) else np.nan,
+                         "welch_t_weak_vs_other_sukuk": round(t, 2) if pd.notna(t) else np.nan,
+                         "unclassified_deals": unclassified})
+    return pd.DataFrame(groups), pd.DataFrame(summ)
+
+
+def changes_vs_legacy(deals: pd.DataFrame, rules=("MAIN", "Robustness A", "Robustness B")) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Market deals whose classification differs from the legacy list: counts by issuer and the deal list."""
+    d = deals.dropna(subset=["nip_bp"])
+    d = d[~d["off_market"]] if "off_market" in d else d
+    counts, lists = [], []
+    for rule in rules:
+        col = f"sub_{rule}"
+        diff = d[d[col].notna() & (d[col] != d["sub_Legacy"])]
+        unc = d[d[col].isna()]
+        for issuer, g in d.groupby("issuer"):
+            ch = diff[diff["issuer"] == issuer]
+            un = unc[unc["issuer"] == issuer]
+            if len(ch) or len(un):
+                counts.append({"rule": rule, "issuer": issuer, "deals": len(g),
+                               "weak_to_other": int((ch["sub_Legacy"] == 1).sum()),
+                               "other_to_weak": int((ch["sub_Legacy"] == 0).sum()), "unclassified": len(un)})
+        if len(diff):
+            lists.append(pd.DataFrame({
+                "rule": rule, "issuer": diff["issuer"].values,
+                "issue_date": diff["issue_date"].dt.strftime("%Y-%m-%d").values,
+                "ref_date": diff["ref_date"].dt.strftime("%Y-%m-%d").values,
+                "bond": np.where(diff["is_sukuk"], "Sukuk", "Conventional"),
+                "legacy": np.where(diff["sub_Legacy"] == 1, "Weak", "Other"),
+                "now": np.where(diff[col] == 1, "Weak", "Other"),
+                "nip_bp": diff["nip_bp"].round(1).values}))
+    lst = (pd.concat(lists, ignore_index=True).sort_values(["rule", "issue_date", "issuer"]).reset_index(drop=True)
+           if lists else pd.DataFrame())
+    return pd.DataFrame(counts), lst
+
+
+def issuer_month_status(ratings: pd.DataFrame, issuer_gov: dict, keys, months) -> pd.DataFrame:
+    """MAIN rule by issuer-month (parent_key, month 'YYYY-MM', sub_main) via ratings.monthly_status."""
+    from .ratings import monthly_status
+
+    ms = monthly_status(ratings, pd.PeriodIndex(months, freq="M"))
+    ms["month"] = ms["month"].astype(str)
+    rows = [{"parent_key": k, "government": issuer_gov.get(k)} for k in keys]
+    m = pd.DataFrame(rows).merge(ms[["government", "month", "sub_ig"]], on="government", how="left")
+    return m.rename(columns={"sub_ig": "sub_main"})[["parent_key", "month", "sub_main"]]

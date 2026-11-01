@@ -1,5 +1,33 @@
-weak,is_sukuk,bonds,mean_bp,median_bp
-Other issuers,Conventional,88,7.3,7.5
-Other issuers,Sukuk,38,-0.5,-1.7
-Weak credits,Conventional,29,14.2,19.8
-Weak credits,Sukuk,21,-44.8,-39.7
+rule,sample,credit,bond,bonds,mean_bp,median_bp
+MAIN,All issuers,Other,Conventional,86,12.2,9.6
+MAIN,All issuers,Other,Sukuk,42,-4.0,-3.0
+MAIN,All issuers,Weak credit,Conventional,23,11.9,18.6
+MAIN,All issuers,Weak credit,Sukuk,15,-54.0,-55.2
+MAIN,Excluding Bahrain (government and BAPCO),Other,Conventional,86,12.2,9.6
+MAIN,Excluding Bahrain (government and BAPCO),Other,Sukuk,42,-4.0,-3.0
+MAIN,Excluding Bahrain (government and BAPCO),Weak credit,Conventional,5,20.1,20.6
+MAIN,Excluding Bahrain (government and BAPCO),Weak credit,Sukuk,1,-21.5,-21.5
+Robustness A,All issuers,Other,Conventional,82,11.9,9.2
+Robustness A,All issuers,Other,Sukuk,35,-1.0,-2.6
+Robustness A,All issuers,Weak credit,Conventional,27,13.1,19.2
+Robustness A,All issuers,Weak credit,Sukuk,22,-42.7,-38.6
+Robustness A,Excluding Bahrain (government and BAPCO),Other,Conventional,82,11.9,9.2
+Robustness A,Excluding Bahrain (government and BAPCO),Other,Sukuk,35,-1.0,-2.6
+Robustness A,Excluding Bahrain (government and BAPCO),Weak credit,Conventional,9,20.0,20.6
+Robustness A,Excluding Bahrain (government and BAPCO),Weak credit,Sukuk,8,-19.0,-23.4
+Robustness B,All issuers,Other,Conventional,86,7.6,7.8
+Robustness B,All issuers,Other,Sukuk,40,-1.7,-2.7
+Robustness B,All issuers,Weak credit,Conventional,31,12.9,19.2
+Robustness B,All issuers,Weak credit,Sukuk,19,-47.0,-46.6
+Robustness B,Excluding Bahrain (government and BAPCO),Other,Conventional,86,7.6,7.8
+Robustness B,Excluding Bahrain (government and BAPCO),Other,Sukuk,40,-1.7,-2.7
+Robustness B,Excluding Bahrain (government and BAPCO),Weak credit,Conventional,13,17.4,20.6
+Robustness B,Excluding Bahrain (government and BAPCO),Weak credit,Sukuk,5,-20.9,-24.5
+Legacy,All issuers,Other,Conventional,88,7.3,7.5
+Legacy,All issuers,Other,Sukuk,38,-0.5,-1.7
+Legacy,All issuers,Weak credit,Conventional,29,14.2,19.8
+Legacy,All issuers,Weak credit,Sukuk,21,-44.8,-39.7
+Legacy,Excluding Bahrain (government and BAPCO),Other,Conventional,88,7.3,7.5
+Legacy,Excluding Bahrain (government and BAPCO),Other,Sukuk,38,-0.5,-1.7
+Legacy,Excluding Bahrain (government and BAPCO),Weak credit,Conventional,11,21.5,25.2
+Legacy,Excluding Bahrain (government and BAPCO),Weak credit,Sukuk,7,-21.7,-24.5

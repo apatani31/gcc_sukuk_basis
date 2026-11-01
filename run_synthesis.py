@@ -44,7 +44,7 @@ def main(argv=None) -> int:
     slopes, within = rd("credit/credit_issuer_slopes.csv"), rd("credit/credit_within_issuer.csv")
     mech, thr, inf = (rd("mechanism/mechanism_regressions.csv"), rd("mechanism/mechanism_threshold.csv"),
                       rd("mechanism/mechanism_inference.csv"))
-    nipg, nipi = rd("data_quality/dq_new_issue_premium_groups.csv"), rd("data_quality/dq_new_issue_premium_by_issuer.csv")
+    pr, nipi = rd("data_quality/dq_primary_rule_summary.csv"), rd("data_quality/dq_new_issue_premium_by_issuer.csv")
     stale, ll, rev = (rd("data_quality/dq_staleness_summary.csv"), rd("data_quality/dq_lead_lag.csv"),
                       rd("data_quality/dq_reversal.csv"))
     pt = rd("data_quality/dq_passthrough_horizons.csv")
@@ -72,9 +72,11 @@ def main(argv=None) -> int:
     tv_cds = tv[tv["model"].str.startswith("CDS >") & (tv["term"] == "sub_t")].iloc[0]
     tv_rat = tv[tv["model"].str.startswith("Ratings") & (tv["term"] == "sub_t")]
     moodys = oba[oba["event"].str.startswith("Moody's")].iloc[0]
-    wk_s = row(nipg, weak="Weak credits", is_sukuk="Sukuk")
-    wk_c = row(nipg, weak="Weak credits", is_sukuk="Conventional")
-    ot_s = row(nipg, weak="Other issuers", is_sukuk="Sukuk")
+    # primary market: MAIN rule (pre-committed); robustness range over A, B and Bahrain-excluded MAIN
+    pm = row(pr, rule="MAIN", sample="All issuers")
+    pm_rob = pr[(pr["rule"].isin(["Robustness A", "Robustness B"]) & (pr["sample"] == "All issuers"))
+                | ((pr["rule"] == "MAIN") & (pr["sample"] != "All issuers"))]["weak_sukuk_minus_conv_bp"]
+    pm_exb = pr[(pr["rule"] == "MAIN") & (pr["sample"] != "All issuers")].iloc[0]
     both = nipi.dropna(subset=["sukuk_minus_conv_bp", "secondary_basis_bp"])
     corr_ps = both["sukuk_minus_conv_bp"].corr(both["secondary_basis_bp"])
     st_s, st_c = row(stale, group="Sukuk"), row(stale, group="Conventional")
@@ -118,10 +120,17 @@ def main(argv=None) -> int:
          f"The pooled panel slope ({panel.slope_per_100bp:+.1f}bp) is not significant on its own once only six CDS "
          f"series are counted (wild bootstrap p = {fmt_p(panel.p_wild_government)}); the case studies carry the claim."),
         ("The discount exists at issue, not only in secondary quotes",
-         f"Weak-credit sukuk priced a median {wk_s.median_bp:+.1f}bp against their issuer's conventional curve at issue, "
-         f"vs {wk_c.median_bp:+.1f}bp for the same issuers' new conventional bonds and {ot_s.median_bp:+.1f}bp for "
-         f"other issuers' sukuk; issuer-level correlation with the secondary basis {corr_ps:.2f}.",
-         "Stale secondary quotes cannot explain a discount that is already there on the pricing date."),
+         f"Classifying each deal by its government's rating at pricing (MAIN rule: two of three agencies below "
+         f"BBB-/Baa3), weak-credit sukuk priced a median {pm.weak_sukuk_median_bp:+.1f}bp against their issuer's "
+         f"conventional curve (n = {int(pm.weak_sukuk_n)}), vs {pm.weak_conv_median_bp:+.1f}bp for weak-credit "
+         f"conventional deals (n = {int(pm.weak_conv_n)}) and {pm.other_sukuk_median_bp:+.1f}bp for other issuers' "
+         f"sukuk: a sukuk-minus-conventional gap of {pm.weak_sukuk_minus_conv_bp:+.1f}bp (robustness range "
+         f"{pm_rob.min():+.1f} to {pm_rob.max():+.1f}bp). Issuer-level correlation with the secondary basis "
+         f"{corr_ps:.2f}.",
+         "Stale secondary quotes cannot explain a discount that is already there on the pricing date. Under MAIN "
+         f"almost all weak-credit sukuk are Bahraini ({int(pm.weak_sukuk_n - pm_exb.weak_sukuk_n)} of "
+         f"{int(pm.weak_sukuk_n)}); the lowest-rating and spread rules, which keep more non-Bahraini deals, give the "
+         "same sign without Bahrain."),
         ("Sukuk quotes are somewhat stale, but that is not the story",
          f"Unchanged mid price on {st_s.unchanged_mid_share:.1%} of days for sukuk vs {st_c.unchanged_mid_share:.1%} "
          f"for conventionals; sukuk absorb {ll_all.same_day:.2f} of a conventional move on the day and "
@@ -202,9 +211,14 @@ def main(argv=None) -> int:
         {"specification": "CDS x interbank spread", "estimate": f"{ib.coef_bp:+.2f} per 100bp per bp",
          "inference": f"wild p = {fmt_p(ib.p_wild_government)}; Holm-adjusted {fmt_p(hp['ib'])}",
          "source": "mechanism_results.md"},
-        {"specification": "New-issue premium, weak-credit sukuk minus conventional",
-         "estimate": f"{wk_s.median_bp - wk_c.median_bp:+.1f}bp (medians)",
-         "inference": f"{int(wk_s.bonds)} sukuk, {int(wk_c.bonds)} conventional", "source": "data_quality_results.md"},
+        {"specification": "New-issue premium, weak-credit sukuk minus conventional (MAIN: 2 of 3 agencies below IG "
+                          "at pricing)",
+         "estimate": f"{pm.weak_sukuk_minus_conv_bp:+.1f}bp (medians)",
+         "inference": f"{int(pm.weak_sukuk_n)} sukuk, {int(pm.weak_conv_n)} conventional; Welch t "
+                      f"{pm.welch_t_weak_vs_other_sukuk:.1f} vs other sukuk; robustness range {pm_rob.min():+.1f} to "
+                      f"{pm_rob.max():+.1f}bp (lowest rating, spread > 150bp, MAIN without Bahrain with "
+                      f"n = {int(pm_exb.weak_sukuk_n)} sukuk)",
+         "source": "data_quality_results.md"},
         {"specification": "Oil-price rise, basis at +5 days (median)", "estimate": f"{med5:+.1f}bp",
          "inference": f"MDE80 {mde5:.1f}bp", "source": "event_study.md"},
         {"specification": "Implied via CDS, +5 days", "estimate": f"{imp5.implied_basis_bp:+.2f}bp",
