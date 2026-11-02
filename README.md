@@ -271,6 +271,16 @@ rules leave its deals unclassified. The weak-credit rows of the staleness,
 lead-lag and reversal tables in the same report use MAIN at the issuer-month
 level.
 
+**Do unmatched deals differ?** Many new deals have no usable curve, so they have
+no NIP. Section e of `data_quality_results.md` checks whether that could bias the
+result. It classifies all deals by the MAIN rule (for unmatched deals, on the issue
+date minus 5 business days), reports match rates by credit, bond type, year, tenor
+and issuer, and regresses each deal's spread over the US Treasury curve at its tenor
+on `sukuk + sukuk:subIG + C(obligor) + C(issue_year) + tenor + tenor^2` for all,
+matched and unmatched deals. This check is cruder than the NIP, because it does not
+control for where a bond sits on its issuer's curve, so it is a consistency check,
+not a second estimate.
+
 **Caveats.** If a deal settled more than 5 business days after pricing, or was
 pre-marketed (mandate and investor calls) well before pricing, the curve may
 already reflect it. Yields at issue are computed (30/360, settlement on the

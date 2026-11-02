@@ -16,10 +16,12 @@ from pathlib import Path
 import pandas as pd
 
 from src import config as C
-from src.data_quality import (OFF_MARKET_BP, RULES, changes_vs_legacy, classify_deals, flag_off_market,
-                              issuer_month_status, lead_lag, new_issue_premia, premium_by_issuer, reversal,
-                              rule_summary, staleness)
+from src.data_quality import (OFF_MARKET_BP, RULES, add_treasury_spread, changes_vs_legacy, classify_deals,
+                              curve_free_medians, curve_free_regressions, flag_off_market, issuer_month_status,
+                              lead_lag, match_rates, new_issue_premia, premium_by_issuer, reversal, rule_summary,
+                              staleness)
 from src.event_study import bond_paths, passthrough
+from src.inference import fmt_p
 from src.ratings import ISSUER_GOVERNMENT, load_ratings
 from src.summary import _md
 from src.twin import UstCurve, load_panel
@@ -56,6 +58,42 @@ def reading(summ: pd.DataFrame) -> list[str]:
                        for r in ("Robustness A", "Robustness B") if r in exb.index)
            + ". The premium is smaller without Bahrain but keeps its sign."]
     return out
+
+
+def selection_reading(mr: pd.DataFrame, reg: pd.DataFrame, med: pd.DataFrame, summ: pd.DataFrame,
+                      deals: pd.DataFrame) -> str:
+    """One paragraph computed from the selection-check tables."""
+    rate = mr.set_index(["dimension", "group"])["match_rate"]
+    r = reg.set_index("sample")
+    a, m, u = r.loc["All deals"], r.loc["Matched deals"], r.loc["Unmatched deals"]
+    other = summ[(summ["rule"] == "MAIN") & (summ["sample"] == "All issuers")].iloc[0].other_sukuk_median_bp
+    d = deals[~deals["off_market"]]
+    odd = int(((~d["matched"]) & (d["spread_bp"] < 0)).sum())
+    y = {k: rate[("Issue year", k)] for k in ("2016-18", "2023-26")}
+    return (f"The unmatched deals do not overturn the result, but they cannot confirm it on their own. Match rates are "
+            f"{rate[('Credit (MAIN)', 'Sub-IG')]:.0%} for sub-IG deals and {rate[('Credit (MAIN)', 'IG')]:.0%} for "
+            f"investment-grade deals, and within each credit group sukuk and conventional deals match at similar rates "
+            f"(sub-IG {rate[('Credit x bond', 'Sub-IG sukuk')]:.0%} vs {rate[('Credit x bond', 'Sub-IG conventional')]:.0%}; "
+            f"IG {rate[('Credit x bond', 'IG sukuk')]:.0%} vs {rate[('Credit x bond', 'IG conventional')]:.0%}), so "
+            "selection does not obviously favour one bond type. The larger gaps are by time and tenor: "
+            f"{y['2016-18']:.0%} of 2016-18 deals match against {y['2023-26']:.0%} of 2023-26 deals, and only "
+            f"{rate[('Tenor', '>20y')]:.0%} of deals over 20 years, so the new-issue premium mostly describes recent "
+            "deals up to 20 years. On the curve-free measure, sub-IG sukuk come "
+            f"{m.sub_ig_sukuk_minus_conv_bp:+.0f}bp against conventional deals among matched deals (n = {int(m.deals)}), "
+            f"{u.sub_ig_sukuk_minus_conv_bp:+.0f}bp among unmatched (n = {int(u.deals)}, only {int(u.sub_ig_deals)} sub-IG and "
+            f"{int(u.sub_ig_sukuk)} sub-IG sukuk, t {u.sub_ig_t:.1f}) and {a.sub_ig_sukuk_minus_conv_bp:+.0f}bp on all deals "
+            f"(n = {int(a.deals)}): the same sign and similar size, with the unmatched estimate imprecise. The sukuk:subIG "
+            f"term is {a.interaction_bp:+.0f}bp on all deals with issuer-clustered p {fmt_p(a.interaction_p_cluster)} "
+            f"but wild bootstrap p = {fmt_p(a.interaction_p_wild_government)} by government. Only "
+            f"{int(a.sub_ig_governments)} sub-IG governments identify that term, and a cluster bootstrap is unreliable with so "
+            "few treated clusters, so neither p-value should be taken at face value; the unmatched sample's wild p "
+            f"({fmt_p(u.interaction_p_wild_government)}, with an issuer-clustered t of {u.interaction_t_cluster:.1f}) "
+            "reflects that problem, not evidence. This check is cruder than the issuer-curve measure and is a "
+            "consistency check, not a second estimate: it does not control for where a bond sits on its issuer's "
+            f"curve, and it gives {a.ig_sukuk_minus_conv_bp:+.1f}bp for investment-grade sukuk against {other:+.1f}bp "
+            "(median new-issue premium of those sukuk) from the curve-based measure. Because the off-market flag needs "
+            f"a curve, unmatched official placements cannot be screened out; unmatched market deals pricing below Treasuries: "
+            f"{odd}.")
 
 
 def main(argv=None) -> int:
@@ -115,7 +153,7 @@ def main(argv=None) -> int:
     # d. primary market
     panel = load_panel(uni, a.data / "timeseries")
     ust = UstCurve(C.TWIN["ust_curve_path"]) if Path(C.TWIN["ust_curve_path"]).exists() else None
-    nip = new_issue_premia(uni, panel, keys, ust)
+    nip = new_issue_premia(uni, panel, keys, ust, lead_bdays=PM["lead_bdays"])
     cds = pd.read_parquet(C.DATA_DIR / "market" / "sovereign_cds.parquet").astype(float)
     cds.index = pd.to_datetime(cds.index)
     cm = cds.resample("ME").mean()
@@ -123,11 +161,15 @@ def main(argv=None) -> int:
     daily = pd.read_csv(a.data / "analysis" / "twin_basis_issuer_daily.csv")
     secondary = daily.groupby("parent_key")["basis_bp"].mean().rename("mean_basis_bp").reset_index()
     prem = premium_by_issuer(nip, cm, C.ISSUER_SOVEREIGN, secondary)
-    deals = classify_deals(flag_off_market(nip), ratings, ISSUER_GOVERNMENT, cds, ust, PM)
+    deals = add_treasury_spread(classify_deals(flag_off_market(nip), ratings, ISSUER_GOVERNMENT, cds, ust, PM), ust)
     off = deals[deals["off_market"]][["issuer", "isin", "issue_date", "is_sukuk", "tenor_at_issue",
                                       "yield_at_issue", "nip_bp"]].round(2)
     grp_tbl, summ = rule_summary(deals, RULES)
     ch_counts, ch_deals = changes_vs_legacy(deals)
+    # e. selection check: deals with no usable curve
+    mr, mr_reasons = match_rates(deals, PM)
+    cf_reg = curve_free_regressions(deals)
+    cf_med = curve_free_medians(deals)
     both = prem.dropna(subset=["sukuk_minus_conv_bp", "secondary_basis_bp"])
     corr = both["sukuk_minus_conv_bp"].corr(both["secondary_basis_bp"]) if len(both) > 2 else float("nan")
     s_only = prem.dropna(subset=["sukuk_nip_median_bp", "secondary_basis_bp"])
@@ -140,7 +182,9 @@ def main(argv=None) -> int:
                      ("dq_staleness_by_credit", stale_credit), ("dq_lead_lag", ll),
                      ("dq_passthrough_horizons", pt), ("dq_reversal", rv),
                      ("dq_new_issue_premium_by_issuer", prem), ("dq_new_issue_premium_groups", grp_tbl),
-                     ("dq_primary_rule_summary", summ), ("dq_primary_reclassified_by_issuer", ch_counts)):
+                     ("dq_primary_rule_summary", summ), ("dq_primary_reclassified_by_issuer", ch_counts),
+                     ("dq_match_rates", mr), ("dq_match_reasons", mr_reasons),
+                     ("dq_curve_free_regressions", cf_reg), ("dq_curve_free_medians", cf_med)):
         df.to_csv(out / f"{name}.csv", index=False)
     # deal-level files: not matched by the .gitignore whitelist (dq_*.csv), so they stay local
     deals.to_csv(out / "deal_level_new_issues.csv", index=False)
@@ -208,11 +252,31 @@ def main(argv=None) -> int:
          "\n**By issuer** (medians; secondary_basis_bp = the issuer's mean twin-curve basis):\n\n", _md(prem),
          f"\nCorrelation across issuers with the secondary-market basis: sukuk new-issue premium **{corr_s:.2f}** "
          f"({len(s_only)} issuers); sukuk-minus-conventional premium **{corr:.2f}** ({len(both)} issuers with both).\n",
+         "\n## e. Do unmatched deals differ?\n",
+         f"{int((~deals['matched']).sum())} of {len(deals)} new deals have no usable curve (no conventional bonds "
+         "trading on the reference date, or the deal's maturity falls outside that curve), so they have no new-issue "
+         "premium. This section checks whether leaving them out could bias the result. All deals are classified by "
+         "the MAIN rule on their reference date (for these deals, the issue date minus 5 business days), and the "
+         "tables use market deals, excluding the off-market deals flagged above.\n\n",
+         "**Reading:** ", selection_reading(mr, cf_reg, cf_med, summ, deals), "\n",
+         "\n**Match rates** (share of deals with a usable curve):\n\n", _md(mr[mr["dimension"] != "Issuer"]),
+         "\n**Why deals have no curve:**\n\n", _md(mr_reasons),
+         "\n**Match rates by issuer:**\n\n", _md(mr[mr["dimension"] == "Issuer"].drop(columns=["dimension"])),
+         "\n**Curve-free check.** Spread at issue = yield at issue minus the US Treasury yield at the deal's tenor on "
+         "the reference date (linear interpolation on that day's curve), which every deal has. Regression: spread_bp "
+         "~ sukuk + sukuk:subIG + C(issuer) + C(issue_year) + tenor + tenor squared, with issuer meaning the obligor "
+         "(sukuk SPVs carry different issuer names). `ig_` and `sub_ig_sukuk_minus_conv_bp` are the implied "
+         "sukuk-minus-conventional spreads; t-stats and `interaction_p_cluster` cluster by issuer; "
+         "`interaction_t_government` and `interaction_p_wild_government` cluster by government (restricted wild "
+         "bootstrap, Webb weights, 9,999 draws).\n\n", _md(cf_reg),
+         "\n**Median spread at issue:**\n\n", _md(cf_med), "\n",
          "\n## Caveats\n",
          "- Yield at issue is computed (30/360, settlement on the issue date). LSEG secondary yields use their "
          "own conventions, so levels can differ by a few bp. The sukuk-minus-conventional difference cancels "
          "most of this.",
-         "- Pre-2019 price coverage is thin, so early issues often have no curve.",
+         "- Pre-2019 price coverage is thin, so early issues often have no curve (section e).",
+         "- The off-market flag needs an issuer curve, so it cannot catch off-market deals among the unmatched "
+         "(section e).",
          "- Ratings are hand-compiled from public announcements (data/market/sovereign_ratings.csv); Dubai uses "
          "the DEWA proxy.",
          "- Staleness metrics depend on the price source (Tradeweb vs composite) as well as on the bond type.\n"]

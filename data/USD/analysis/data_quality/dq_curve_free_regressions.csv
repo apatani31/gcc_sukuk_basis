@@ -1,0 +1,4 @@
+sample,deals,sukuk_deals,sub_ig_deals,sub_ig_sukuk,issuers,ig_sukuk_minus_conv_bp,ig_t,sub_ig_sukuk_minus_conv_bp,sub_ig_t,interaction_bp,interaction_t_cluster,interaction_p_cluster,interaction_t_government,interaction_p_wild_government,government_clusters,sub_ig_governments
+All deals,257,85,48,18,17,-23.5,-2.54,-87.4,-5.66,-63.9,-3.57,0.0,-4.21,0.337,7,2
+Matched deals,166,57,38,15,15,-23.2,-1.92,-73.6,-7.18,-50.4,-2.41,0.016,-2.22,0.367,7,2
+Unmatched deals,91,28,10,3,17,-11.9,-0.68,-83.8,-0.61,-71.9,-0.52,0.601,-3.72,0.037,7,2

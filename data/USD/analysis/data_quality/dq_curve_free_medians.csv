@@ -1,0 +1,9 @@
+credit,bond,sample,deals,median_spread_bp,median_tenor
+IG,Conventional,Matched,86,113.3,10.0
+IG,Conventional,Unmatched,56,180.4,12.0
+IG,Sukuk,Matched,42,85.6,7.2
+IG,Sukuk,Unmatched,25,157.7,7.1
+Sub-IG,Conventional,Matched,23,391.7,12.0
+Sub-IG,Conventional,Unmatched,7,478.7,10.0
+Sub-IG,Sukuk,Matched,15,272.5,7.5
+Sub-IG,Sukuk,Unmatched,3,297.4,10.0

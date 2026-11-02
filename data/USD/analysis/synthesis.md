@@ -78,4 +78,5 @@ Generated 2026-11-01. Every number below is read from a stage report's CSV outpu
 - Six independent sovereign CDS series and 18 issuers: small-sample inference throughout.
 - Sub-IG status uses each government's rating at the time (hand-compiled histories; Dubai proxied by DEWA, rationale in README.md). Under the 2-of-3 rule Sharjah counts as investment grade despite a premium like the sub-IG group's. Export-date snapshot ratings are kept only as a comparison.
 - Secondary sukuk quotes are staler than conventional ones; the primary-market check is the defence.
+- 99 of 275 market new deals have no usable curve and no new-issue premium (79% of sub-IG and 61% of investment-grade deals match). A cruder curve-free check gives sub-IG sukuk minus conventional of -74bp on matched deals and -84bp on unmatched deals, the latter on only 10 sub-IG deals (data_quality_results.md, section e).
 - Raw LSEG data is not distributed with this repository.

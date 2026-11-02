@@ -266,6 +266,8 @@ def classify_deals(nip: pd.DataFrame, ratings: pd.DataFrame | None, issuer_gov: 
     n = nip.copy()
     n["government"] = n["parent_key"].map(issuer_gov)
     n["ref_date"] = n["curve_date"]
+    if "issue_date" in n:   # deals with no usable curve: same proxy for the pricing date, issue date minus the lead
+        n["ref_date"] = n["ref_date"].fillna(n["issue_date"] - pd.tseries.offsets.BDay(cfg["lead_bdays"]))
     rows = []
     cds = cds_daily.astype(float).sort_index()
     for r in n.itertuples():
@@ -371,3 +373,113 @@ def issuer_month_status(ratings: pd.DataFrame, issuer_gov: dict, keys, months) -
     rows = [{"parent_key": k, "government": issuer_gov.get(k)} for k in keys]
     m = pd.DataFrame(rows).merge(ms[["government", "month", "sub_ig"]], on="government", how="left")
     return m.rename(columns={"sub_ig": "sub_main"})[["parent_key", "month", "sub_main"]]
+
+
+# ---------------------------------------------------------------------------
+# e. Selection check: do deals with no usable curve differ?
+# ---------------------------------------------------------------------------
+def add_treasury_spread(deals: pd.DataFrame, ust: UstCurve) -> pd.DataFrame:
+    """spread_bp = yield at issue minus the US Treasury yield at the deal's tenor on its reference date
+    (linear interpolation on that day's curve). Needs no issuer curve, so every deal has one."""
+    d = deals.copy()
+    vals = []
+    for r in d.itertuples():
+        row = ust.row(r.ref_date) if pd.notna(r.ref_date) else None
+        vals.append((r.yield_at_issue - float(np.interp(r.tenor_at_issue, *row))) * 100 if row is not None else np.nan)
+    d["spread_bp"] = vals
+    d["matched"] = d["nip_bp"].notna()
+    d["issue_year"] = d["issue_date"].dt.year
+    return d
+
+
+def _band(values: pd.Series, bands: dict) -> pd.Series:
+    out = pd.Series(index=values.index, dtype=object)
+    for label, (lo, hi) in bands.items():
+        out[(values > lo) & (values <= hi)] = label
+    return out
+
+
+def match_rates(deals: pd.DataFrame, cfg: dict) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Share of market deals with a usable curve, by credit x bond type, year, tenor and issuer (MAIN rule),
+    plus the reason for deals with no usable curve."""
+    d = deals[~deals["off_market"]].copy()
+    d["credit"] = d["sub_MAIN"].map({1.0: "Sub-IG", 0.0: "IG"}).fillna("Unclassified (multilateral)")
+    d["bond"] = np.where(d["is_sukuk"], "sukuk", "conventional")
+    d["year_band"] = pd.Series(pd.NA, index=d.index, dtype=object)
+    yrs = d["issue_year"]
+    for label, (lo, hi) in cfg["year_bands"].items():
+        d.loc[yrs.between(lo, hi), "year_band"] = label
+    d["tenor_band"] = _band(d["tenor_at_issue"], cfg["tenor_bands"])
+    rows = []
+
+    def add(dim, group, g):
+        rows.append({"dimension": dim, "group": group, "deals": len(g), "matched": int(g["matched"].sum()),
+                     "match_rate": round(g["matched"].mean(), 3)})
+
+    add("All market deals", "All", d)
+    for c, g in d.groupby("credit"):
+        add("Credit (MAIN)", c, g)
+    for (c, b), g in d[d["sub_MAIN"].notna()].groupby(["credit", "bond"]):
+        add("Credit x bond", f"{c} {b}", g)
+    for label in cfg["year_bands"]:
+        add("Issue year", label, d[d["year_band"] == label])
+    for label in cfg["tenor_bands"]:
+        add("Tenor", label, d[d["tenor_band"] == label])
+    for key, g in d.groupby("parent_key"):
+        add("Issuer", g["issuer"].mode().iat[0], g)
+    reasons = (d.assign(reason=np.where(d["matched"], "matched", d["match_method"]))
+               .groupby("reason").agg(deals=("matched", "size"), median_tenor=("tenor_at_issue", "median"),
+                                      median_issue_year=("issue_year", "median"),
+                                      sub_ig_deals=("sub_MAIN", lambda s: int((s == 1).sum())))
+               .round(1).reset_index())
+    return pd.DataFrame(rows), reasons
+
+
+def curve_free_regressions(deals: pd.DataFrame, B: int = 9999) -> pd.DataFrame:
+    """spread_bp ~ sukuk + sukuk:sub_ig + C(parent_key) + C(issue_year) + tenor + tenor2, on all, matched and
+    unmatched market deals. Errors clustered by issuer (obligor), plus a restricted wild cluster bootstrap by
+    government for sukuk:sub_ig. Implied sukuk minus conventional: `sukuk` for IG deals, the sum for sub-IG."""
+    import statsmodels.formula.api as smf
+
+    from .inference import wild_cluster_bootstrap
+
+    d = deals[~deals["off_market"]].dropna(subset=["spread_bp", "sub_MAIN", "government"]).copy()
+    d["sukuk"] = d["is_sukuk"].astype(float)
+    d["sub_ig"] = d["sub_MAIN"].astype(float)
+    d["tenor"] = d["tenor_at_issue"]
+    d["tenor2"] = d["tenor"] ** 2
+    d["year_fe"] = d["issue_year"].astype(str)
+    f = "spread_bp ~ sukuk + sukuk:sub_ig + C(parent_key) + C(year_fe) + tenor + tenor2"
+    rows = []
+    for name, dd in (("All deals", d), ("Matched deals", d[d["matched"]]), ("Unmatched deals", d[~d["matched"]])):
+        rec = {"sample": name, "deals": len(dd), "sukuk_deals": int(dd["sukuk"].sum()),
+               "sub_ig_deals": int((dd["sub_ig"] == 1).sum()),
+               "sub_ig_sukuk": int(((dd["sub_ig"] == 1) & (dd["sukuk"] == 1)).sum()), "issuers": dd["parent_key"].nunique()}
+        identified = rec["sub_ig_sukuk"] > 0 and ((dd["sub_ig"] == 1) & (dd["sukuk"] == 0)).any()
+        if identified:
+            r = smf.ols(f, dd).fit(cov_type="cluster", cov_kwds={"groups": pd.factorize(dd["parent_key"])[0]})
+            tt = r.t_test("sukuk + sukuk:sub_ig = 0")
+            w = wild_cluster_bootstrap(f, dd, "sukuk:sub_ig", "government", B=B)
+            rec.update(ig_sukuk_minus_conv_bp=round(r.params["sukuk"], 1), ig_t=round(r.tvalues["sukuk"], 2),
+                       sub_ig_sukuk_minus_conv_bp=round(float(tt.effect[0]), 1),
+                       sub_ig_t=round(float(tt.tvalue[0][0]), 2),
+                       interaction_bp=round(r.params["sukuk:sub_ig"], 1),
+                       interaction_t_cluster=round(r.tvalues["sukuk:sub_ig"], 2),
+                       interaction_p_cluster=round(float(r.pvalues["sukuk:sub_ig"]), 3),
+                       interaction_t_government=round(w["t_cr1"], 2),
+                       interaction_p_wild_government=round(w["p_wild"], 3), government_clusters=w["clusters"],
+                       sub_ig_governments=dd.loc[dd["sub_ig"] == 1, "government"].nunique())
+        rows.append(rec)
+    return pd.DataFrame(rows)
+
+
+def curve_free_medians(deals: pd.DataFrame) -> pd.DataFrame:
+    """Median Treasury spread at issue by credit (MAIN) x bond type x matched / unmatched."""
+    d = deals[~deals["off_market"]].dropna(subset=["spread_bp", "sub_MAIN"])
+    rows = []
+    for (s, k, m), g in d.groupby(["sub_MAIN", "is_sukuk", "matched"]):
+        rows.append({"credit": "Sub-IG" if s == 1 else "IG", "bond": "Sukuk" if k else "Conventional",
+                     "sample": "Matched" if m else "Unmatched", "deals": len(g),
+                     "median_spread_bp": round(g["spread_bp"].median(), 1),
+                     "median_tenor": round(g["tenor_at_issue"].median(), 1)})
+    return pd.DataFrame(rows).sort_values(["credit", "bond", "sample"]).reset_index(drop=True)

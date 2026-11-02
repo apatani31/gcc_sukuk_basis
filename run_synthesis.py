@@ -84,6 +84,12 @@ def main(argv=None) -> int:
     pm_rob = pr[(pr["rule"].isin(["Robustness A", "Robustness B"]) & (pr["sample"] == "All issuers"))
                 | ((pr["rule"] == "MAIN") & (pr["sample"] != "All issuers"))]["weak_sukuk_minus_conv_bp"]
     pm_exb = pr[(pr["rule"] == "MAIN") & (pr["sample"] != "All issuers")].iloc[0]
+    mr = rd("data_quality/dq_match_rates.csv")
+    mr_all = mr[mr["dimension"] == "All market deals"].iloc[0]
+    mr_sub = mr[(mr["dimension"] == "Credit (MAIN)") & (mr["group"] == "Sub-IG")].iloc[0]
+    mr_ig = mr[(mr["dimension"] == "Credit (MAIN)") & (mr["group"] == "IG")].iloc[0]
+    cfr = rd("data_quality/dq_curve_free_regressions.csv").set_index("sample")
+    cf_m, cf_u = cfr.loc["Matched deals"], cfr.loc["Unmatched deals"]
     both = nipi.dropna(subset=["sukuk_minus_conv_bp", "secondary_basis_bp"])
     corr_ps = both["sukuk_minus_conv_bp"].corr(both["secondary_basis_bp"])
     st_s, st_c = row(stale, group="Sukuk"), row(stale, group="Conventional")
@@ -268,6 +274,11 @@ def main(argv=None) -> int:
           "rationale in README.md). Under the 2-of-3 rule Sharjah counts as investment grade despite a premium like the "
           "sub-IG group's. Export-date snapshot ratings are kept only as a comparison.",
           "- Secondary sukuk quotes are staler than conventional ones; the primary-market check is the defence.",
+          f"- {int(mr_all.deals - mr_all.matched)} of {int(mr_all.deals)} market new deals have no usable curve and no "
+          f"new-issue premium ({mr_sub.match_rate:.0%} of sub-IG and {mr_ig.match_rate:.0%} of investment-grade deals "
+          f"match). A cruder curve-free check gives sub-IG sukuk minus conventional of "
+          f"{cf_m.sub_ig_sukuk_minus_conv_bp:+.0f}bp on matched deals and {cf_u.sub_ig_sukuk_minus_conv_bp:+.0f}bp on "
+          f"unmatched deals, the latter on only {int(cf_u.sub_ig_deals)} sub-IG deals (data_quality_results.md, section e).",
           "- Raw LSEG data is not distributed with this repository.\n"]
     (A / "synthesis.md").write_text("\n".join(L), encoding="utf-8")
     log.info("Wrote %s", A / "synthesis.md")

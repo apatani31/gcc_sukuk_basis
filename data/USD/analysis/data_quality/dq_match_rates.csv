@@ -1,0 +1,35 @@
+dimension,group,deals,matched,match_rate
+All market deals,All,275,176,0.64
+Credit (MAIN),IG,209,128,0.612
+Credit (MAIN),Sub-IG,48,38,0.792
+Credit (MAIN),Unclassified (multilateral),18,10,0.556
+Credit x bond,IG conventional,142,86,0.606
+Credit x bond,IG sukuk,67,42,0.627
+Credit x bond,Sub-IG conventional,30,23,0.767
+Credit x bond,Sub-IG sukuk,18,15,0.833
+Issue year,2016-18,44,18,0.409
+Issue year,2019-20,59,25,0.424
+Issue year,2021-22,46,26,0.565
+Issue year,2023-26,126,107,0.849
+Tenor,<=5y,70,45,0.643
+Tenor,5-10y,107,75,0.701
+Tenor,10-20y,58,45,0.776
+Tenor,>20y,40,11,0.275
+Issuer,First Abu Dhabi Bank PJSC,17,11,0.647
+Issuer,Dae Funding LLC,9,1,0.111
+Issuer,Arab Energy Fund,18,10,0.556
+Issuer,"Saudi Arabia, Kingdom of (Government)",47,37,0.787
+Issuer,Saudi Arabian Oil Co,23,15,0.652
+Issuer,"Bahrain, Kingdom of (Government)",33,30,0.909
+Issuer,SNB Funding Ltd,5,2,0.4
+Issuer,BSF Sukuk Company Ltd,4,1,0.25
+Issuer,BAPCO Energies BSCC Closed,7,2,0.286
+Issuer,Mdgh Gmtn Rsc Ltd,20,15,0.75
+Issuer,DP World Ltd,7,2,0.286
+Issuer,Dubai DOF Sukuk Ltd,3,0,0.0
+Issuer,ICD Funding Ltd,3,0,0.0
+Issuer,Al Jawaher Assets Company SPC,3,1,0.333
+Issuer,Sharjah Sukuk Programme Ltd,22,7,0.318
+Issuer,GACI First Investment Co,19,14,0.737
+Issuer,"Oman, Sultanate of (Government)",15,11,0.733
+Issuer,"Qatar, State of (Government)",20,17,0.85

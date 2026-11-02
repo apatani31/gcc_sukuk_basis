@@ -228,9 +228,13 @@ PRIMARY_MARKET = {
                         "conventional spread over US Treasuries at the deal's maturity",
         "Legacy": "fixed list (Bahrain, Oman, BAPCO, Sharjah) for the whole sample, comparison only",
     },
+    "lead_bdays": 5,                # curve date / reference date: business days before the issue date
     "spread_threshold_bp": 150.0,
     "cds_max_staleness_days": 10,   # use the last CDS print within this many days before the reference date
     "legacy_weak": ["bahrain kingdom", "oman sultanate", "bapco energies", "emirate sharjah"],
+    # selection check for deals with no usable curve (data_quality.match_rates)
+    "year_bands": {"2016-18": (2016, 2018), "2019-20": (2019, 2020), "2021-22": (2021, 2022), "2023-26": (2023, 2026)},
+    "tenor_bands": {"<=5y": (0, 5), "5-10y": (5, 10), "10-20y": (10, 20), ">20y": (20, 1000)},
 }
 
 

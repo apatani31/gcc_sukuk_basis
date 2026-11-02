@@ -249,9 +249,105 @@ Counts by issuer (market deals). *unclassified* = no government rating under tha
 Correlation across issuers with the secondary-market basis: sukuk new-issue premium **0.67** (14 issuers); sukuk-minus-conventional premium **0.78** (12 issuers with both).
 
 
+## e. Do unmatched deals differ?
+
+99 of 277 new deals have no usable curve (no conventional bonds trading on the reference date, or the deal's maturity falls outside that curve), so they have no new-issue premium. This section checks whether leaving them out could bias the result. All deals are classified by the MAIN rule on their reference date (for these deals, the issue date minus 5 business days), and the tables use market deals, excluding the off-market deals flagged above.
+
+
+**Reading:** 
+The unmatched deals do not overturn the result, but they cannot confirm it on their own. Match rates are 79% for sub-IG deals and 61% for investment-grade deals, and within each credit group sukuk and conventional deals match at similar rates (sub-IG 83% vs 77%; IG 63% vs 61%), so selection does not obviously favour one bond type. The larger gaps are by time and tenor: 41% of 2016-18 deals match against 85% of 2023-26 deals, and only 28% of deals over 20 years, so the new-issue premium mostly describes recent deals up to 20 years. On the curve-free measure, sub-IG sukuk come -74bp against conventional deals among matched deals (n = 166), -84bp among unmatched (n = 91, only 10 sub-IG and 3 sub-IG sukuk, t -0.6) and -87bp on all deals (n = 257): the same sign and similar size, with the unmatched estimate imprecise. The sukuk:subIG term is -64bp on all deals with issuer-clustered p < 0.001 but wild bootstrap p = 0.337 by government. Only 2 sub-IG governments identify that term, and a cluster bootstrap is unreliable with so few treated clusters, so neither p-value should be taken at face value; the unmatched sample's wild p (0.037, with an issuer-clustered t of -0.5) reflects that problem, not evidence. This check is cruder than the issuer-curve measure and is a consistency check, not a second estimate: it does not control for where a bond sits on its issuer's curve, and it gives -23.5bp for investment-grade sukuk against -3.0bp (median new-issue premium of those sukuk) from the curve-based measure. Because the off-market flag needs a curve, unmatched official placements cannot be screened out; unmatched market deals pricing below Treasuries: 1.
+
+
+
+**Match rates** (share of deals with a usable curve):
+
+
+| dimension | group | deals | matched | match_rate |
+|---|---|---|---|---|
+| All market deals | All | 275 | 176 | 0.64 |
+| Credit (MAIN) | IG | 209 | 128 | 0.612 |
+| Credit (MAIN) | Sub-IG | 48 | 38 | 0.792 |
+| Credit (MAIN) | Unclassified (multilateral) | 18 | 10 | 0.556 |
+| Credit x bond | IG conventional | 142 | 86 | 0.606 |
+| Credit x bond | IG sukuk | 67 | 42 | 0.627 |
+| Credit x bond | Sub-IG conventional | 30 | 23 | 0.767 |
+| Credit x bond | Sub-IG sukuk | 18 | 15 | 0.833 |
+| Issue year | 2016-18 | 44 | 18 | 0.409 |
+| Issue year | 2019-20 | 59 | 25 | 0.424 |
+| Issue year | 2021-22 | 46 | 26 | 0.565 |
+| Issue year | 2023-26 | 126 | 107 | 0.849 |
+| Tenor | <=5y | 70 | 45 | 0.643 |
+| Tenor | 5-10y | 107 | 75 | 0.701 |
+| Tenor | 10-20y | 58 | 45 | 0.776 |
+| Tenor | >20y | 40 | 11 | 0.275 |
+
+
+**Why deals have no curve:**
+
+
+| reason | deals | median_tenor | median_issue_year | sub_ig_deals |
+|---|---|---|---|---|
+| matched | 176 | 9.2 | 2023.0 | 38 |
+| no curve | 40 | 6.0 | 2019.0 | 1 |
+| outside curve | 59 | 10.0 | 2020.0 | 9 |
+
+
+**Match rates by issuer:**
+
+
+| group | deals | matched | match_rate |
+|---|---|---|---|
+| First Abu Dhabi Bank PJSC | 17 | 11 | 0.647 |
+| Dae Funding LLC | 9 | 1 | 0.111 |
+| Arab Energy Fund | 18 | 10 | 0.556 |
+| Saudi Arabia, Kingdom of (Government) | 47 | 37 | 0.787 |
+| Saudi Arabian Oil Co | 23 | 15 | 0.652 |
+| Bahrain, Kingdom of (Government) | 33 | 30 | 0.909 |
+| SNB Funding Ltd | 5 | 2 | 0.4 |
+| BSF Sukuk Company Ltd | 4 | 1 | 0.25 |
+| BAPCO Energies BSCC Closed | 7 | 2 | 0.286 |
+| Mdgh Gmtn Rsc Ltd | 20 | 15 | 0.75 |
+| DP World Ltd | 7 | 2 | 0.286 |
+| Dubai DOF Sukuk Ltd | 3 | 0 | 0.0 |
+| ICD Funding Ltd | 3 | 0 | 0.0 |
+| Al Jawaher Assets Company SPC | 3 | 1 | 0.333 |
+| Sharjah Sukuk Programme Ltd | 22 | 7 | 0.318 |
+| GACI First Investment Co | 19 | 14 | 0.737 |
+| Oman, Sultanate of (Government) | 15 | 11 | 0.733 |
+| Qatar, State of (Government) | 20 | 17 | 0.85 |
+
+
+**Curve-free check.** Spread at issue = yield at issue minus the US Treasury yield at the deal's tenor on the reference date (linear interpolation on that day's curve), which every deal has. Regression: spread_bp ~ sukuk + sukuk:subIG + C(issuer) + C(issue_year) + tenor + tenor squared, with issuer meaning the obligor (sukuk SPVs carry different issuer names). `ig_` and `sub_ig_sukuk_minus_conv_bp` are the implied sukuk-minus-conventional spreads; t-stats and `interaction_p_cluster` cluster by issuer; `interaction_t_government` and `interaction_p_wild_government` cluster by government (restricted wild bootstrap, Webb weights, 9,999 draws).
+
+
+| sample | deals | sukuk_deals | sub_ig_deals | sub_ig_sukuk | issuers | ig_sukuk_minus_conv_bp | ig_t | sub_ig_sukuk_minus_conv_bp | sub_ig_t | interaction_bp | interaction_t_cluster | interaction_p_cluster | interaction_t_government | interaction_p_wild_government | government_clusters | sub_ig_governments |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| All deals | 257 | 85 | 48 | 18 | 17 | -23.5 | -2.54 | -87.4 | -5.66 | -63.9 | -3.57 | 0.0 | -4.21 | 0.337 | 7 | 2 |
+| Matched deals | 166 | 57 | 38 | 15 | 15 | -23.2 | -1.92 | -73.6 | -7.18 | -50.4 | -2.41 | 0.016 | -2.22 | 0.367 | 7 | 2 |
+| Unmatched deals | 91 | 28 | 10 | 3 | 17 | -11.9 | -0.68 | -83.8 | -0.61 | -71.9 | -0.52 | 0.601 | -3.72 | 0.037 | 7 | 2 |
+
+
+**Median spread at issue:**
+
+
+| credit | bond | sample | deals | median_spread_bp | median_tenor |
+|---|---|---|---|---|---|
+| IG | Conventional | Matched | 86 | 113.3 | 10.0 |
+| IG | Conventional | Unmatched | 56 | 180.4 | 12.0 |
+| IG | Sukuk | Matched | 42 | 85.6 | 7.2 |
+| IG | Sukuk | Unmatched | 25 | 157.7 | 7.1 |
+| Sub-IG | Conventional | Matched | 23 | 391.7 | 12.0 |
+| Sub-IG | Conventional | Unmatched | 7 | 478.7 | 10.0 |
+| Sub-IG | Sukuk | Matched | 15 | 272.5 | 7.5 |
+| Sub-IG | Sukuk | Unmatched | 3 | 297.4 | 10.0 |
+
+
+
+
 ## Caveats
 
 - Yield at issue is computed (30/360, settlement on the issue date). LSEG secondary yields use their own conventions, so levels can differ by a few bp. The sukuk-minus-conventional difference cancels most of this.
-- Pre-2019 price coverage is thin, so early issues often have no curve.
+- Pre-2019 price coverage is thin, so early issues often have no curve (section e).
+- The off-market flag needs an issuer curve, so it cannot catch off-market deals among the unmatched (section e).
 - Ratings are hand-compiled from public announcements (data/market/sovereign_ratings.csv); Dubai uses the DEWA proxy.
 - Staleness metrics depend on the price source (Tradeweb vs composite) as well as on the bond type.
