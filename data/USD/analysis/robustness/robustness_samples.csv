@@ -1,0 +1,7 @@
+sample,sub_ig_mean_bp,ig_mean_bp,gap_bp,p_wild_government,obligor_months,governments,sub_ig_governments
+Baseline,-67.6,-9.4,-58.2,0.0378,924,7,2
+Conventional curves from senior unsecured bonds only,-67.6,-9.5,-58.1,0.0394,924,7,2
+DEWA bond removed from Dubai's conventional curve,-67.6,-9.4,-58.2,0.0377,924,7,2
+"Bonds LSEG flags as callable removed, both sides",-67.6,-7.8,-59.8,0.0417,697,7,2
+Sukuk-days priced 97-103,-62.4,-11.3,-51.1,0.052,613,7,2
+"All bond-days priced 95-105, both sides",-60.8,-8.2,-52.6,0.0333,617,7,2

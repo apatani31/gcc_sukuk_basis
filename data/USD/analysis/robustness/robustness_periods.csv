@@ -1,0 +1,5 @@
+sample,sub_ig_mean_bp,ig_mean_bp,gap_bp,p_wild_government,obligor_months,governments,sub_ig_governments
+Before 2021,-62.1,13.8,-75.9,0.0458,169,4,2
+2021 onward,-69.4,-13.7,-55.8,0.053,755,7,2
+2023 onward,-50.9,-13.7,-37.2,0.1391,559,7,2
+Excluding 2020,-65.9,-10.1,-55.8,0.0556,879,7,2

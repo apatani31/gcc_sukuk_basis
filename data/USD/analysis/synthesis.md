@@ -1,13 +1,13 @@
 # GCC sukuk vs conventional bonds: synthesis
 
-Generated 2026-11-01. Every number below is read from a stage report's CSV output.
+Generated 2026-11-02. Every number below is read from a stage report's CSV output.
 
 ## Headline numbers
 
 1. **Sukuk trade below their own issuer's conventional curve.** -18.6bp average across 18 issuers (median -8.7bp); 16 of 18 negative; 8 of 8 obligor groups negative on average (issuers grouped by the government backing them; Sharjah and the multilateral Arab Energy Fund stand alone).
    *Holding the issuer fixed, investors accept a lower yield on sukuk.*
-2. **The sukuk premium is concentrated in sub-investment-grade credits.** By rating at the time (2 of 3 agencies below BBB-/Baa3; Dubai via its DEWA proxy), sub-IG obligor-months average -68bp vs -9bp for investment grade: gap -58bp, wild bootstrap p = 0.038 by obligor group. Robustness: without Dubai -56bp (p = 0.074); without Sharjah -62bp (p = 0.007); lowest rating -54bp (p = 0.013); government CDS above 150bp -55bp (p = 0.077); export-date snapshot ratings -45bp (p = 0.015). Oman's sukuk premium narrowed by 21bp (90% CI [10.3, 32.4]) in the year after Moody's upgrade made it investment grade at two of three agencies.
-   *Concentrated, not exclusive: Sharjah (-44bp) counts as investment grade under the rule because it is split rated and Fitch does not rate it, yet its premium looks like the sub-IG group's and predates Moody's 2022 cut. The rating line approximates what investors price; it is not a sharp threshold.*
+2. **The sukuk premium is concentrated in the two governments rated sub-investment grade, Bahrain and Oman.** By rating at the time (2 of 3 agencies below BBB-/Baa3; Dubai via its DEWA proxy), sub-IG obligor-months average -68bp vs -9bp for investment grade: gap -58bp, wild bootstrap p = 0.038 by obligor group. Robustness: without Dubai -56bp (p = 0.074); without Sharjah -62bp (p = 0.007); lowest rating -54bp (p = 0.013); government CDS above 150bp -55bp (p = 0.077); export-date snapshot ratings -45bp (p = 0.015). Oman's sukuk premium narrowed by 21bp (90% CI [10.3, 32.4]) in the year after Moody's upgrade made it investment grade at two of three agencies. Only two governments are ever sub-IG: the gap is -54bp without Bahrain (p = 0.308) and -60bp without Oman (p = 0.181), and against all 21 pairs of governments the permutation p is 0.048, the lowest that test can give. The gap falls from -76bp before 2021 to -37bp from 2023 (p = 0.139).
+   *Concentrated, not exclusive: Sharjah (-44bp) counts as investment grade under the rule because it is split rated and Fitch does not rate it, yet its premium looks like the sub-IG group's and predates Moody's 2022 cut. The rating line approximates what investors price; it is not a sharp threshold. Two sub-IG governments cannot separate sub-IG status from other features of Bahrain and Oman.*
 3. **Within the weakest sovereigns, the sukuk premium moves with credit risk.** Oman -21.5bp and Bahrain -19.2bp per 100bp of CDS (Newey-West t -4.0, -3.0); also in monthly changes (-50.0, -21.2). By rating at the time, the within slope is +10.4bp in investment-grade months and -35.0bp lower in sub-IG months (p = 0.038).
    *The pooled panel slope (-22.0bp) is not significant on its own once only six CDS series are counted (wild bootstrap p = 0.287); the case studies carry the claim.*
 4. **The sukuk premium exists at issue, not only in secondary quotes.** Classifying each deal by its government's rating at pricing (MAIN rule: two of three agencies below BBB-/Baa3), weak-credit sukuk priced through their issuer's conventional curve: median new-issue premium -55.2bp (n = 15), vs +18.6bp for weak-credit conventional deals, which came with the ordinary concession (n = 23), and -3.0bp for other issuers' sukuk: a sukuk-minus-conventional gap of -73.9bp (robustness range -65.8 to -42.1bp). Issuer-level correlation with the secondary basis 0.78.
@@ -30,6 +30,8 @@ Generated 2026-11-01. Every number below is read from a stage report's CSV outpu
 | Sub-IG minus IG basis (time-varying ratings, Dubai excluded (robustness)) | -56.4bp | wild p = 0.074 (obligor groups), 0.009 (issuer) | mechanism_results.md |
 | Sub-IG minus IG basis (time-varying ratings, Sharjah excluded (robustness)) | -62.1bp | wild p = 0.007 (obligor groups), 0.008 (issuer) | mechanism_results.md |
 | Sub-IG minus IG basis (Lowest rating below BBB-/Baa3 (robustness), Dubai via DEWA proxy) | -54.3bp | wild p = 0.013 (obligor groups), 0.001 (issuer) | mechanism_results.md |
+| Sub-IG minus IG basis, without Bahrain / without Oman (one sub-IG government left) | -53.9 / -60.3bp | wild p = 0.308 / 0.181; unreliable with one treated government | robustness_results.md |
+| Permutation test: Bahrain + Oman vs all pairs of governments | -44.6bp (government means) | p = 0.048; lowest attainable 0.048 | robustness_results.md |
 | Sub-IG minus IG basis (time-varying: CDS > 150bp) | -54.6bp | wild p = 0.077 (obligor groups), 0.022 (issuer) | mechanism_results.md |
 | Sub-IG minus IG basis (comparison: export-date snapshot ratings, Oman counted sub-IG) | -45.0bp | wild p = 0.015 (obligor groups, 8 clusters) | credit_results.md |
 | Extra CDS slope when sub-IG (time-varying ratings, 2 of 3 agencies below BBB-/Baa3) | -35.0 per 100bp | wild p = 0.038 (obligor groups), 0.014 (issuer) | mechanism_results.md |
@@ -72,10 +74,12 @@ Generated 2026-11-01. Every number below is read from a stage report's CSV outpu
 - event_study/event_study.md and oil_credit/oil_credit_results.md: oil shocks and the credit channel.
 - policy/policy_results.md: savings and the counterfactual.
 - drivers/drivers_results.md: interbank, issuance and the common factor.
+- robustness/robustness_results.md: amortisation, dependence on governments, periods, bond samples, new-issue lead.
 
 ## Main caveats
 
-- Six independent sovereign CDS series and 18 issuers: small-sample inference throughout.
+- Six independent sovereign CDS series and 18 issuers: small-sample inference throughout. The sub-IG contrast rests on Bahrain + Oman, so its evidence is at most about 1 in 21.
+- Amortisation is ruled out from LSEG data, not prospectuses: 0 of 68 twin sukuk flagged sinkable; 54 live ones have durations 0.992-1.001 of a bullet (the Emirates control: 3 of 3 flagged, ratio 0.64).
 - Sub-IG status uses each government's rating at the time (hand-compiled histories; Dubai proxied by DEWA, rationale in README.md). Under the 2-of-3 rule Sharjah counts as investment grade despite a premium like the sub-IG group's. Export-date snapshot ratings are kept only as a comparison.
 - Secondary sukuk quotes are staler than conventional ones; the primary-market check is the defence.
 - 99 of 275 market new deals have no usable curve and no new-issue premium (79% of sub-IG and 61% of investment-grade deals match). A cruder curve-free check gives sub-IG sukuk minus conventional of -74bp on matched deals and -84bp on unmatched deals, the latter on only 10 sub-IG deals (data_quality_results.md, section e).

@@ -1,0 +1,6 @@
+group,bonds,flag_found,sinkable,callable,putable,duration_tested,ratio_min,ratio_median,ratio_max
+Twin sukuk,68,68,0,9,0,54,0.992,0.998,1.001
+"Twin sukuk, Bahrain and Oman",17,17,0,0,0,12,0.993,0.998,1.0
+Conventional bonds of twin issuers,189,189,0,46,1,138,0.963,0.999,1.033
+"Conventional, Bahrain and Oman",42,42,0,0,0,26,0.989,1.0,1.01
+Control: Emirates airline sukuk (known amortising),3,3,3,0,0,1,0.635,0.635,0.635

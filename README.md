@@ -255,7 +255,7 @@ last rating is carried forward. Three rules (`PRIMARY_MARKET` in
 
 | Rule | Weak credit when |
 |---|---|
-| **MAIN** (chosen before seeing the results, reported first) | at least two of S&P, Moody's and Fitch rate the government below BBB-/Baa3; where only two agencies rate it, both must; where only one, that one decides |
+| **MAIN** (reported first; fixed after the legacy-list primary results and the rating-based secondary gaps had been seen, so not pre-registered) | at least two of S&P, Moody's and Fitch rate the government below BBB-/Baa3; where only two agencies rate it, both must; where only one, that one decides |
 | Robustness A | the lowest available rating is below BBB-/Baa3 |
 | Robustness B | the credit spread on the reference date is above 150bp: the government's 5y CDS where it exists, otherwise (Sharjah) the issuer's conventional curve yield at the deal's maturity minus the US Treasury yield at that maturity |
 
@@ -285,9 +285,44 @@ not a second estimate.
 pre-marketed (mandate and investor calls) well before pricing, the curve may
 already reflect it. Yields at issue are computed (30/360, settlement on the
 issue date), not taken from deal documents. Checking a sample of deals against
-their announced pricing date and reoffer yield, and re-running with other leads
-(for example 2, 10 and 20 business days via `lead_bdays`), would test how much
-the choice matters.
+their announced pricing date and reoffer yield has not been done. Other leads (2,
+10 and 20 business days) are in `robustness_results.md`, section e.
+
+## How far the sub-IG result reaches
+
+```
+.venv\Scripts\python run_structure_check.py --session platform
+.venv\Scripts\python run_robustness.py
+```
+
+`run_structure_check.py` makes LSEG calls and stores bond-level flags locally
+(gitignored); `run_robustness.py` makes none and writes
+`data/USD/analysis/robustness/robustness_results.md` with summary tables only.
+
+**Amortisation.** A sukuk that amortises has a shorter average life than its final
+maturity, so matching it on final maturity on an upward-sloping curve would make it
+look rich, most of all for weak credits. Yields here are to final maturity, so this
+had to be ruled out. Two tests are used: LSEG's `IsSinkable` flag from the Search API
+(the `TR.Fi` structure fields are denied on this login) and LSEG modified duration
+against a bullet bond of the same coupon and maturity. The excluded Emirates airline
+sukuk are the positive control. No prospectus was read for this check, and duration
+only covers live bonds, so matured sukuk rest on the flag.
+
+**Few governments.** Only Bahrain and Oman are ever sub-IG under MAIN, so the report
+gives leave-one-government-out estimates and an exact permutation test over all pairs
+of governments. With seven governments that test cannot give a p below 1 in 21. Read
+the wild bootstrap p-values for the level gap with that limit in mind. The result
+describes these two governments and does not by itself show that sub-IG status is
+the cause; Sharjah has a premium without the rating.
+
+**Ratings check.** The dates that change a government's status were compared with
+public reports (November 2026): Bahrain's 2016 cuts, Oman's 2017-2019 cuts and
+2024-2025 upgrades, and Moody's 2022 cut of Sharjah, with S&P's BBB- for Sharjah
+reported through May 2024. All agree to the month, so no status changes. Sources differ
+by a day on Oman's Moody's and Fitch upgrades and on Sharjah's Moody's cut, and one
+gives 1 August rather than 28 June 2016 for Bahrain's Fitch cut, which does not
+affect Bahrain's status because S&P and Moody's had already moved. These were press
+and finance-ministry reports, not agency archives. Other rating rows were not rechecked.
 
 ## Design decisions and data caveats
 

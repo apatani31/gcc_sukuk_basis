@@ -53,6 +53,11 @@ def main(argv=None) -> int:
     sav, cf = rd("policy/policy_savings_by_issuer.csv"), rd("policy/policy_counterfactual.csv")
     tv, oba = rd("mechanism/mechanism_time_varying.csv"), rd("mechanism/mechanism_oman_before_after.csv")
     struct = rd("mechanism/mechanism_structure_overall.csv").set_index("structure")["sukuk"]
+    logo, perm = rd("robustness/robustness_leave_one_government.csv"), rd("robustness/robustness_permutation.csv").iloc[0]
+    periods, structure = rd("robustness/robustness_periods.csv"), rd("robustness/robustness_structure.csv")
+    no_bah, no_oman = row(logo, sample="Without Bahrain"), row(logo, sample="Without Oman")
+    p_early, p_late = row(periods, sample="Before 2021"), row(periods, sample="2023 onward")
+    twin_struct, ctl_struct = structure.iloc[0], structure.iloc[-1]
 
     tw = row(rob, variant=rob["variant"].iloc[0])
     oman = row(slopes, issuer="Oman, Sultanate of (Government)")
@@ -79,7 +84,7 @@ def main(argv=None) -> int:
     sharjah = rd("credit/credit_issuer_means.csv")
     sharjah = sharjah[sharjah["parent_key"] == "emirate sharjah"].iloc[0]
     moodys = oba[oba["event"].str.startswith("Moody's")].iloc[0]
-    # primary market: MAIN rule (pre-committed); robustness range over A, B and Bahrain-excluded MAIN
+    # primary market: MAIN rule; robustness range over A, B and Bahrain-excluded MAIN
     pm = row(pr, rule="MAIN", sample="All issuers")
     pm_rob = pr[(pr["rule"].isin(["Robustness A", "Robustness B"]) & (pr["sample"] == "All issuers"))
                 | ((pr["rule"] == "MAIN") & (pr["sample"] != "All issuers"))]["weak_sukuk_minus_conv_bp"]
@@ -113,7 +118,7 @@ def main(argv=None) -> int:
          f"{int(level.governments)} obligor groups negative on average (issuers grouped by the government backing "
          "them; Sharjah and the multilateral Arab Energy Fund stand alone).",
          "Holding the issuer fixed, investors accept a lower yield on sukuk."),
-        ("The sukuk premium is concentrated in sub-investment-grade credits",
+        ("The sukuk premium is concentrated in the two governments rated sub-investment grade, Bahrain and Oman",
          f"By rating at the time (2 of 3 agencies below BBB-/Baa3; Dubai via its DEWA proxy), sub-IG obligor-months "
          f"average {tv_main.sub_ig_mean_bp:.0f}bp vs {tv_main.ig_mean_bp:.0f}bp for investment grade: gap "
          f"{tv_main.coef_bp:.0f}bp, wild bootstrap p = {fmt_p(tv_main.p_wild_government)} by obligor group. Robustness: "
@@ -122,10 +127,16 @@ def main(argv=None) -> int:
          f"(p = {fmt_p(tv_low.p_wild_government)}); government CDS above 150bp {tv_cds.coef_bp:.0f}bp "
          f"(p = {fmt_p(tv_cds.p_wild_government)}); export-date snapshot ratings {level.snapshot_gap_bp:.0f}bp "
          f"(p = {fmt_p(level.snapshot_p_wild_government)}). Oman's sukuk premium narrowed by {moodys.change_bp:.0f}bp "
-         f"(90% CI {moodys.ci90}) in the year after Moody's upgrade made it investment grade at two of three agencies.",
+         f"(90% CI {moodys.ci90}) in the year after Moody's upgrade made it investment grade at two of three agencies. "
+         f"Only two governments are ever sub-IG: the gap is {no_bah.gap_bp:.0f}bp without Bahrain (p = "
+         f"{fmt_p(no_bah.p_wild_government)}) and {no_oman.gap_bp:.0f}bp without Oman (p = "
+         f"{fmt_p(no_oman.p_wild_government)}), and against all {int(perm.assignments)} pairs of governments the "
+         f"permutation p is {perm.p_two_sided:.3f}, the lowest that test can give. The gap falls from "
+         f"{p_early.gap_bp:.0f}bp before 2021 to {p_late.gap_bp:.0f}bp from 2023 (p = {fmt_p(p_late.p_wild_government)}).",
          f"Concentrated, not exclusive: Sharjah ({sharjah.basis:.0f}bp) counts as investment grade under the rule "
          "because it is split rated and Fitch does not rate it, yet its premium looks like the sub-IG group's and "
-         "predates Moody's 2022 cut. The rating line approximates what investors price; it is not a sharp threshold."),
+         "predates Moody's 2022 cut. The rating line approximates what investors price; it is not a sharp threshold. "
+         "Two sub-IG governments cannot separate sub-IG status from other features of Bahrain and Oman."),
         ("Within the weakest sovereigns, the sukuk premium moves with credit risk",
          f"Oman {oman.slope_levels_per_100bp:+.1f}bp and Bahrain {bah.slope_levels_per_100bp:+.1f}bp per 100bp of CDS "
          f"(Newey-West t {oman.t_nw_levels:.1f}, {bah.t_nw_levels:.1f}); also in monthly changes "
@@ -187,6 +198,14 @@ def main(argv=None) -> int:
             "estimate": f"{r.coef_bp:.1f}bp",
             "inference": f"wild p = {fmt_p(r.p_wild_government)} (obligor groups), {fmt_p(r.p_wild_issuer)} (issuer)",
             "source": "mechanism_results.md"} for r in tv_rat.itertuples()]),
+        {"specification": "Sub-IG minus IG basis, without Bahrain / without Oman (one sub-IG government left)",
+         "estimate": f"{no_bah.gap_bp:.1f} / {no_oman.gap_bp:.1f}bp",
+         "inference": f"wild p = {fmt_p(no_bah.p_wild_government)} / {fmt_p(no_oman.p_wild_government)}; unreliable with one "
+                      "treated government", "source": "robustness_results.md"},
+        {"specification": f"Permutation test: {perm.sub_ig_governments} vs all pairs of governments",
+         "estimate": f"{perm.difference_bp:.1f}bp (government means)",
+         "inference": f"p = {perm.p_two_sided:.3f}; lowest attainable {perm.smallest_possible_p:.3f}",
+         "source": "robustness_results.md"},
         {"specification": "Sub-IG minus IG basis (time-varying: CDS > 150bp)", "estimate": f"{tv_cds.coef_bp:.1f}bp",
          "inference": f"wild p = {fmt_p(tv_cds.p_wild_government)} (obligor groups), {fmt_p(tv_cds.p_wild_issuer)} (issuer)",
          "source": "mechanism_results.md"},
@@ -267,9 +286,15 @@ def main(argv=None) -> int:
           "- data_quality/data_quality_results.md: staleness, lead-lag, reversal, primary market.",
           "- event_study/event_study.md and oil_credit/oil_credit_results.md: oil shocks and the credit channel.",
           "- policy/policy_results.md: savings and the counterfactual.",
-          "- drivers/drivers_results.md: interbank, issuance and the common factor.\n",
+          "- drivers/drivers_results.md: interbank, issuance and the common factor.",
+          "- robustness/robustness_results.md: amortisation, dependence on governments, periods, bond samples, new-issue lead.\n",
           "## Main caveats\n",
-          "- Six independent sovereign CDS series and 18 issuers: small-sample inference throughout.",
+          "- Six independent sovereign CDS series and 18 issuers: small-sample inference throughout. The sub-IG contrast "
+          f"rests on {perm.sub_ig_governments}, so its evidence is at most about 1 in {int(perm.assignments)}.",
+          f"- Amortisation is ruled out from LSEG data, not prospectuses: {int(twin_struct.sinkable)} of "
+          f"{int(twin_struct.bonds)} twin sukuk flagged sinkable; {int(twin_struct.duration_tested)} live ones have "
+          f"durations {twin_struct.ratio_min:.3f}-{twin_struct.ratio_max:.3f} of a bullet (the Emirates control: "
+          f"{int(ctl_struct.sinkable)} of {int(ctl_struct.bonds)} flagged, ratio {ctl_struct.ratio_min:.2f}).",
           "- Sub-IG status uses each government's rating at the time (hand-compiled histories; Dubai proxied by DEWA, "
           "rationale in README.md). Under the 2-of-3 rule Sharjah counts as investment grade despite a premium like the "
           "sub-IG group's. Export-date snapshot ratings are kept only as a comparison.",

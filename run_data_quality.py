@@ -239,8 +239,9 @@ def main(argv=None) -> int:
          "reference date are not used. State companies take their owner's rating (BAPCO and Bahrain; Oman "
          "Electricity Transmission and Oman; Aramco, PIF, SNB, BSF and KSA; DP World, ICD, DAE and Dubai, whose "
          "rows are the DEWA proxy; FAB, Mamoura and Abu Dhabi). The multilateral Arab Energy Fund has no "
-         f"government rating, so the rating rules leave it unclassified ({unc or 'none'}). The MAIN rule was "
-         "chosen before seeing these results; the others are robustness checks.\n",
+         f"government rating, so the rating rules leave it unclassified ({unc or 'none'}). The MAIN rule is "
+         "reported first and the others are robustness checks. MAIN was fixed after the legacy-list results and the "
+         "rating-based secondary gaps had been seen, so it is not pre-registered.\n",
          "\n**Reading:**\n", *reading(summ),
          *rule_block("MAIN"), *rule_block("Robustness A"), *rule_block("Robustness B"),
          "\n### Excluding Bahrain (government and BAPCO)\n", _md(bah),

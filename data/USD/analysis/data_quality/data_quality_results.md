@@ -1,6 +1,6 @@
 # Secondary-market data quality and a primary-market check
 
-Generated 2026-11-01. Bonds: the twin-curve set (fixed coupon, at least USD 100m, one line per bond) of the twin issuers. **Weak credit** in every table means sub-investment grade under the MAIN rule (at least two of S&P, Moody's and Fitch below BBB-/Baa3; see README.md). Sections a to c classify each **issuer-month**; section d classifies each **deal at its reference date**. There is no fixed list of weak issuers: Oman, for example, is a weak credit only while two agencies rate it below investment grade.
+Generated 2026-11-02. Bonds: the twin-curve set (fixed coupon, at least USD 100m, one line per bond) of the twin issuers. **Weak credit** in every table means sub-investment grade under the MAIN rule (at least two of S&P, Moody's and Fitch below BBB-/Baa3; see README.md). Sections a to c classify each **issuer-month**; section d classifies each **deal at its reference date**. There is no fixed list of weak issuers: Oman, for example, is a weak credit only while two agencies rate it below investment grade.
 
 ## a. How stale are sukuk quotes?
 
@@ -98,7 +98,7 @@ Matching status of new issues: {'interp': 140, 'outside curve': 59, 'no curve': 
 | Bahrain, Kingdom of (Government) | XS3282978173 | 2026-02-02 00:00:00 | False | 10.0 | 1.0 | -565.17 |
 
 
-**Which deals count as weak credit.** Each deal is classified on its **reference date**: the curve date above, a proxy for the pricing date (the export has no pricing date). Rating rows dated after the reference date are not used. State companies take their owner's rating (BAPCO and Bahrain; Oman Electricity Transmission and Oman; Aramco, PIF, SNB, BSF and KSA; DP World, ICD, DAE and Dubai, whose rows are the DEWA proxy; FAB, Mamoura and Abu Dhabi). The multilateral Arab Energy Fund has no government rating, so the rating rules leave it unclassified ({'Arab Energy Fund': 8, 'APICORP Sukuk Ltd': 2}). The MAIN rule was chosen before seeing these results; the others are robustness checks.
+**Which deals count as weak credit.** Each deal is classified on its **reference date**: the curve date above, a proxy for the pricing date (the export has no pricing date). Rating rows dated after the reference date are not used. State companies take their owner's rating (BAPCO and Bahrain; Oman Electricity Transmission and Oman; Aramco, PIF, SNB, BSF and KSA; DP World, ICD, DAE and Dubai, whose rows are the DEWA proxy; FAB, Mamoura and Abu Dhabi). The multilateral Arab Energy Fund has no government rating, so the rating rules leave it unclassified ({'Arab Energy Fund': 8, 'APICORP Sukuk Ltd': 2}). The MAIN rule is reported first and the others are robustness checks. MAIN was fixed after the legacy-list results and the rating-based secondary gaps had been seen, so it is not pre-registered.
 
 
 **Reading:**

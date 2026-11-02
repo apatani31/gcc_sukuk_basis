@@ -1,5 +1,5 @@
 SOURCES: GCC sukuk vs conventional bond capstone (MGMT 4090, Group 2)
-Last updated 2026-10-29 (ratings sources added). APA style. Add new sources under the matching heading.
+Last updated 2026-11-02 (rating crossing-date check added). APA style. Add new sources under the matching heading.
 
 ======================================================================
 1. PRELIMINARY RESEARCH (literature used in Research Brief 1)
@@ -88,6 +88,9 @@ LSEG Workspace / LSEG Data Library for Python (formerly Refinitiv). Accessed
       OMOMR3MD=CBOX (Oman).
     - Market series: LCOc1 and LCOc12 (Brent futures), .SPX, .VIX, .DXY,
       US10YT=RR, and the US Treasury curve (data/market/ust_curve.parquet).
+    - Bond structure (accessed November 2026): IsSinkable, IsCallable and
+      IsPutable from the Search API (GOV_CORP_INSTRUMENTS view);
+      TR.ModifiedDuration. Bond-level values stay local.
 
 ======================================================================
 5. SOVEREIGN RATINGS (data/market/sovereign_ratings.csv)
@@ -158,6 +161,40 @@ News coverage:
     https://www.financemiddleeast.com/opinion/delaying-the-inevitable-sp-downgrades-bahrain-but-upgrades-kuwait/
   TradingView news (Fitch cuts Bahrain to B, 2026-02-23)
     https://www.tradingview.com/news/te_news:527794:0-fitch-downgrades-bahrain-credit-rating-to-b/
+
+Crossing-date check (November 2026; dates that change a government's status,
+compared with the CSV to the month; no CSV rows changed):
+  Oman Observer (Moody's upgrades Oman to Baa3 from Ba1, 2025-07-11; article
+    2025-07-12; the CSV has 2025-07-10, same month)
+    https://www.omanobserver.om/article/1173349/opinion/omans-return-to-investment-grade-is-a-national-milestone
+  Oman Ministry of Finance (Fitch upgrades Oman to BBB- from BB+, statement
+    dated 2025-12-09; the CSV has 2025-12-08, same month)
+    https://www.fm.gov.om/en/32215/
+  Oman Observer (Fitch upgrades Oman to BBB- from BB+, 2025-12-08)
+    https://www.omanobserver.om/article/1180824/oman/community/fitch-upgrades-omans-credit-rating-from-bb-to-bbb-
+  Gulf Business (S&P upgrades Oman to BBB- from BB+, September 2024; page
+    blocked automated access, so read from search results only)
+    https://gulfbusiness.com/oman-sp-junk-status/
+  Gulf News (S&P cuts Oman to BB+ from BBB-, May 2017; page shows only a later
+    "last updated" stamp)
+    https://gulfnews.com/business/economy/s-p-cuts-oman-debt-to-junk-as-cheap-oil-shrinks-external-reserves-1.2026663
+  EMTA Oman timeline (Fitch cuts Oman to BB+ from BBB-, 2018-12-18)
+    https://www.emta.org/markets/markets-h-o/oman/
+  Mills, R. (2019, March 19). Asia Times (Moody's cuts Oman to Ba1 from Baa3)
+    https://www.asiatimes.com/2019/03/opinion/omans-economic-woes-a-sign-of-coming-times/
+  Gulf News (Fitch cuts Bahrain to BB+, with S&P at BB and Moody's at Ba2, June
+    2016; page shows only a later "last updated" stamp)
+    https://gulfnews.com/business/fitch-downgrades-bahrain-to-junk-on-widening-deficit-1.1854223
+  CNBC (Moody's cuts Bahrain to Ba1, 2016-03-05; the CSV has 2016-03-04, same
+    month)
+    https://www.cnbc.com/amp/2016/03/05/moodys-reviews-saudi-arabia-cuts-bahrain-to-junk.html
+  Arab News (Moody's cuts Sharjah to Ba1 from Baa3, 2022-07-20; the CSV has
+    2022-07-19, same month)
+    https://arabnews.com/node/2125946/
+  BondBloX (Moody's cuts Sharjah to Ba1; page gives no date)
+    https://bondblox.com/news/sharjah-downgraded-to-ba1-by-moodys
+  Enterprise (S&P maintains Sharjah at BBB-/A-3, stable, 2024-05-20)
+    https://enterpriseam.com/uae/2024/05/20/sp-maintained-sharjahs-sovereign-credit-rating-with-a-stable-outlook/
 
 Dubai proxy (DEWA):
   The Government of Dubai has no public sovereign rating from S&P, Moody's or

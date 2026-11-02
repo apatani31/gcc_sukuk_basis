@@ -56,6 +56,8 @@ data/**
 !data/USD/analysis/policy/policy_*.csv
 !data/USD/analysis/data_quality/data_quality_results.md
 !data/USD/analysis/data_quality/dq_*.csv
+!data/USD/analysis/robustness/robustness_results.md
+!data/USD/analysis/robustness/robustness_*.csv
 
 # local working notes, not part of the repository
 NEXT_PROMPT.md
