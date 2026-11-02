@@ -100,7 +100,7 @@ def main(argv=None) -> int:
          f"{int(level.governments)} obligor groups negative on average (issuers grouped by the government backing "
          "them; Sharjah and the multilateral Arab Energy Fund stand alone).",
          "Holding the issuer fixed, investors accept a lower yield on sukuk."),
-        ("The discount is a sub-investment-grade phenomenon",
+        ("The sukuk premium is a sub-investment-grade phenomenon",
          f"Sub-IG issuers {level.sub_ig_mean_bp:.0f}bp vs investment grade {level.ig_mean_bp:.0f}bp: gap "
          f"{level.gap_bp:.0f}bp, wild bootstrap p = {fmt_p(level.p_wild_government)} by obligor group. With a "
          f"time-varying rule (government CDS above 150bp that month) the gap is {tv_cds.coef_bp:.0f}bp "
@@ -109,25 +109,26 @@ def main(argv=None) -> int:
             f"{tv_rat.iloc[0].coef_bp:.0f}bp (p = {fmt_p(tv_rat.iloc[0].p_wild_government)}; "
             f"{tv_rat.iloc[-1].coef_bp:.0f}bp, p = {fmt_p(tv_rat.iloc[-1].p_wild_government)}, with Dubai excluded)."
             if len(tv_rat) else "; the rating-based version awaits the ratings history.")
-         + f" Oman's discount narrowed by {moodys.change_bp:.0f}bp (90% CI {moodys.ci90}) in the year after "
+         + f" Oman's sukuk premium narrowed by {moodys.change_bp:.0f}bp (90% CI {moodys.ci90}) in the year after "
          "Moody's upgrade made it investment grade at two of three agencies.",
-         "A threshold, not a smooth gradient: investment-grade issuers get single-digit discounts."),
-        ("Within the weakest sovereigns, the discount moves with credit risk",
+         "A threshold, not a smooth gradient: investment-grade issuers get single-digit premiums."),
+        ("Within the weakest sovereigns, the sukuk premium moves with credit risk",
          f"Oman {oman.slope_levels_per_100bp:+.1f}bp and Bahrain {bah.slope_levels_per_100bp:+.1f}bp per 100bp of CDS "
          f"(Newey-West t {oman.t_nw_levels:.1f}, {bah.t_nw_levels:.1f}); also in monthly changes "
          f"({oman.slope_changes_per_100bp:+.1f}, {bah.slope_changes_per_100bp:+.1f}). For investment-grade issuers "
          f"the within slope is {ig_slope.coef_bp:+.1f}bp.",
          f"The pooled panel slope ({panel.slope_per_100bp:+.1f}bp) is not significant on its own once only six CDS "
          f"series are counted (wild bootstrap p = {fmt_p(panel.p_wild_government)}); the case studies carry the claim."),
-        ("The discount exists at issue, not only in secondary quotes",
+        ("The sukuk premium exists at issue, not only in secondary quotes",
          f"Classifying each deal by its government's rating at pricing (MAIN rule: two of three agencies below "
-         f"BBB-/Baa3), weak-credit sukuk priced a median {pm.weak_sukuk_median_bp:+.1f}bp against their issuer's "
-         f"conventional curve (n = {int(pm.weak_sukuk_n)}), vs {pm.weak_conv_median_bp:+.1f}bp for weak-credit "
-         f"conventional deals (n = {int(pm.weak_conv_n)}) and {pm.other_sukuk_median_bp:+.1f}bp for other issuers' "
-         f"sukuk: a sukuk-minus-conventional gap of {pm.weak_sukuk_minus_conv_bp:+.1f}bp (robustness range "
+         f"BBB-/Baa3), weak-credit sukuk priced through their issuer's conventional curve: median new-issue premium "
+         f"{pm.weak_sukuk_median_bp:+.1f}bp (n = {int(pm.weak_sukuk_n)}), vs {pm.weak_conv_median_bp:+.1f}bp for "
+         f"weak-credit conventional deals, which came with the ordinary concession (n = {int(pm.weak_conv_n)}), and "
+         f"{pm.other_sukuk_median_bp:+.1f}bp for other issuers' sukuk: a sukuk-minus-conventional gap of "
+         f"{pm.weak_sukuk_minus_conv_bp:+.1f}bp (robustness range "
          f"{pm_rob.min():+.1f} to {pm_rob.max():+.1f}bp). Issuer-level correlation with the secondary basis "
          f"{corr_ps:.2f}.",
-         "Stale secondary quotes cannot explain a discount that is already there on the pricing date. Under MAIN "
+         "Stale secondary quotes cannot explain a premium that is already there on the pricing date. Under MAIN "
          f"almost all weak-credit sukuk are Bahraini ({int(pm.weak_sukuk_n - pm_exb.weak_sukuk_n)} of "
          f"{int(pm.weak_sukuk_n)}); the lowest-rating and spread rules, which keep more non-Bahraini deals, give the "
          "same sign without Bahrain."),
@@ -160,7 +161,7 @@ def main(argv=None) -> int:
          + f" (trailing-12-month basis x outstanding USD sukuk). Investment-grade sovereigns without USD sukuk "
          f"(Kuwait, Abu Dhabi, UAE federal): predicted USD {cf_rng[0]:.1f}-{cf_rng[1]:.1f}m per USD 1bn issued, intervals "
          "including zero.",
-         "Sukuk issuance pays most for the weakest credits, which is where the discount sits."),
+         "Sukuk issuance pays most for the weakest credits, which is where the premium sits."),
     ]
 
     spec = pd.DataFrame([
@@ -235,13 +236,13 @@ def main(argv=None) -> int:
         L += [f"{i}. **{h}.** {n}", f"   *{interp}*"]
     L += ["\n## Main specifications\n", _md(spec),
           "\n## Charts\n",
-          "**1. The discount across issuers is a threshold** (sub-investment-grade issuers marked as squares; the "
+          "**1. The sukuk premium across issuers is a threshold** (sub-investment-grade issuers marked as squares; the "
           "Dubai government's basis rests on 20-year interpolation brackets and is excluded from the fits):\n",
           "![threshold](mechanism/mechanism_threshold_cross.png)\n",
-          "**2. Within issuers, the discount follows the government's CDS where CDS moves** (Bahrain, Oman), "
+          "**2. Within issuers, the sukuk premium follows the government's CDS where CDS moves** (Bahrain, Oman), "
           "and stays near zero where it does not (KSA):\n",
           "![case studies](credit/credit_case_studies.png)\n",
-          "**3. What the discount is worth by issuer:**\n",
+          "**3. What the sukuk premium is worth by issuer (lower funding cost):**\n",
           "![savings](policy/policy_savings.png)\n",
           "## Where to read more\n",
           "- twin_results.md: the twin-curve method, matching validation and the basis by issuer.",

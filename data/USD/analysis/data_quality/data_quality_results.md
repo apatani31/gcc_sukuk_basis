@@ -83,7 +83,7 @@ Monthly basis change on the CDS change (per 100bp) and its six lags. If the same
 
 ## d. Primary market: new-issue premium
 
-For each new fixed-rate bond of a twin issuer with a yield at issue (computed, 30/360, from coupon and issue price), the premium is the yield at issue minus the issuer's conventional curve on the last trading day at least 5 business days before the issue date (within 10 further days), matched at the new bond's maturity with the same rules as twin.py (interpolation, or the US Treasury-adjusted nearest bond within 1 year). New conventional bonds are compared with the issuer's *other* conventional bonds the same way. *Sukuk minus conventional* nets out the ordinary new-issue concession, leaving the primary-market sukuk discount.
+For each new fixed-rate bond of a twin issuer with a yield at issue (computed, 30/360, from coupon and issue price), the premium is the yield at issue minus the issuer's conventional curve on the last trading day at least 5 business days before the issue date (within 10 further days), matched at the new bond's maturity with the same rules as twin.py (interpolation, or the US Treasury-adjusted nearest bond within 1 year). New conventional bonds are compared with the issuer's *other* conventional bonds the same way. *Sukuk minus conventional* nets out the ordinary new-issue concession, leaving the primary-market sukuk premium: a negative value means the sukuk priced through the curve.
 
 
 Matching status of new issues: {'interp': 140, 'outside curve': 59, 'no curve': 40, 'nearest_adj': 38}.
@@ -104,8 +104,8 @@ Matching status of new issues: {'interp': 140, 'outside curve': 59, 'no curve': 
 **Reading:**
 
 - **Does it hold under all three rules?** Yes: weak-credit sukuk minus weak-credit conventional (medians) is MAIN -73.9bp, Robustness A -57.8bp, Robustness B -65.8bp, a range of -73.9 to -57.8bp.
-- **MAIN:** weak-credit sukuk median -55.2bp (n = 15) against +18.6bp for weak-credit conventional bonds (n = 23) and -3.0bp for other issuers' sukuk (Welch t -5.6).
-- **Dependence on Bahrain:** without Bahrain and BAPCO, MAIN leaves 1 weak-credit sukuk (median -21.5bp; sukuk-minus-conventional gap -42.1bp). That is too few to test, so under MAIN the primary-market result rests on Bahrain. The rules that classify more non-Bahraini deals as weak give: Robustness A -44.0bp (n = 8 sukuk, Welch t -2.7); Robustness B -45.1bp (n = 5 sukuk, Welch t -1.9). The discount is smaller without Bahrain but keeps its sign.
+- **MAIN:** weak-credit sukuk priced through the curve, median new-issue premium -55.2bp (n = 15), against +18.6bp for weak-credit conventional bonds (n = 23) and -3.0bp for other issuers' sukuk (Welch t -5.6).
+- **Dependence on Bahrain:** without Bahrain and BAPCO, MAIN leaves 1 weak-credit sukuk (median -21.5bp; sukuk-minus-conventional gap -42.1bp). That is too few to test, so under MAIN the primary-market result rests on Bahrain. The rules that classify more non-Bahraini deals as weak give: Robustness A -44.0bp (n = 8 sukuk, Welch t -2.7); Robustness B -45.1bp (n = 5 sukuk, Welch t -1.9). The premium is smaller without Bahrain but keeps its sign.
 
 ### MAIN: 2 of 3 agencies below BBB-/Baa3 (both if only two rate; the one if only one rates)
 

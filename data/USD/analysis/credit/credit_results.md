@@ -1,13 +1,13 @@
-# Credit stress and the sukuk discount
+# Credit stress and the sukuk premium
 
-Generated 2026-10-29. Issuer-month panel from the twin-curve basis.
+Generated 2026-11-01. Issuer-month panel from the twin-curve basis.
 
 ## What the evidence supports
 
 The claim rests on three pieces, in this order of strength:
 
 1. **Level, across issuers.** 16 of 18 issuers have a negative mean basis, and the average is negative in 8 of 8 obligor groups (issuers grouped by the government whose credit backs them; Sharjah and the multilateral Arab Energy Fund form their own groups). Sub-investment-grade issuers (Bahrain, BAPCO, Sharjah, Oman Electricity Transmission, and the Oman sovereign, which was sub-IG for most of the sample) average -50bp against -5bp for investment-grade issuers: a gap of -45bp, wild cluster bootstrap p = 0.015 clustering by obligor group (8 clusters).
-2. **Case studies within issuers.** The two governments whose CDS moved most show the discount widening as credit risk rises, in levels and in monthly changes:
+2. **Case studies within issuers.** The two governments whose CDS moved most show the sukuk premium widening as credit risk rises, in levels and in monthly changes:
 - **Oman** (CDS range 620bp over 97 months): -21.5bp per 100bp in levels (Newey-West t -4.0), -50.0bp in monthly changes (t -7.4).
 - **Bahrain** (CDS range 360bp over 103 months): -19.2bp per 100bp in levels (Newey-West t -3.0), -21.2bp in monthly changes (t -4.3).
 - **BAPCO Energies BSCC Closed** (CDS range 184bp over 67 months): -84.9bp per 100bp in levels (Newey-West t -3.5), -34.6bp in monthly changes (t -3.3).
@@ -49,7 +49,7 @@ Time-series regression of the issuer's monthly basis on its government's CDS (pe
 - **Liquidity gap:** sukuk minus conventional median bid-ask spread (bp of yield) for the issuer-month. It controls for the alternative explanation that sukuk simply trade less.
 - **Inference:** issuer fixed effects; t-stats clustered by issuer and Driscoll-Kraay (robust to common monthly shocks), plus restricted wild cluster bootstrap p-values (Webb weights, 9,999 draws) by government and by issuer. Issuers without a sovereign CDS form their own government cluster.
 
-## Across issuers: is the discount bigger for weaker credits?
+## Across issuers: is the sukuk premium bigger for weaker credits?
 
 ![cross issuer](credit_cross_issuer.png)
 
@@ -96,8 +96,8 @@ Issuers that share a government share its CDS series, so there are only six inde
 ## Reading the results
 
 - **Within issuers:** the pooled slope is stable whichever government is dropped, but its precision leans on Oman, whose CDS ranged most widely, and the government-level bootstrap does not reject zero. That is why the case studies, not the panel t-stat, carry the within-issuer claim.
-- **Across issuers:** the cross-sectional slope depends on Bahrain (sovereign and BAPCO). Without it there is no gradient among issuers with CDS below about 100bp. Describe the cross-section as a threshold (large discounts for the sub-investment-grade sovereigns, small elsewhere), not a smooth gradient.
-- **Liquidity:** the liquidity-gap coefficient is *negative*: months when sukuk are relatively less liquid are months when they yield relatively *less*. A liquidity premium would show the opposite sign, so liquidity does not explain the discount.
+- **Across issuers:** the cross-sectional slope depends on Bahrain (sovereign and BAPCO). Without it there is no gradient among issuers with CDS below about 100bp. Describe the cross-section as a threshold (large premiums for the sub-investment-grade sovereigns, small elsewhere), not a smooth gradient.
+- **Liquidity:** the liquidity-gap coefficient is *negative*: months when sukuk are relatively less liquid are months when they yield relatively *less*. A liquidity premium would show the opposite sign, so liquidity does not explain the premium.
 
 
 ## Issuer means

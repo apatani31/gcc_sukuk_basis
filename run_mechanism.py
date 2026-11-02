@@ -68,7 +68,7 @@ def chart_threshold(xs: pd.DataFrame, prof: pd.DataFrame, out: Path) -> None:
                     fontsize=8, color=INK2)
     ax.set_xlabel("Mean sovereign 5y CDS of the issuer's government (bp)", color=INK2, fontsize=9)
     ax.set_ylabel("Mean twin-curve basis (bp)", color=INK2, fontsize=9)
-    ax.set_title("Sukuk discount vs credit risk across issuers: a threshold, not a line", fontsize=10,
+    ax.set_title("Sukuk premium vs credit risk across issuers: a threshold, not a line", fontsize=10,
                  color=INK, loc="left")
     ax.legend(frameon=False, fontsize=8, labelcolor=INK2, loc="lower left")
     fig.tight_layout()
@@ -198,11 +198,11 @@ def main(argv=None) -> int:
          _md(mech),
          "\nHow to read the predictions:",
          "- **Recovery / asset backing:** an Ijara sukuk is backed by a tangible asset, so if investors price "
-         "recovery value the discount should *steepen* with CDS for Ijara (CDS x Ijara < 0).",
+         "recovery value the premium should *steepen* with CDS for Ijara (CDS x Ijara < 0).",
          "- **Default / recovery over time:** expected loss accumulates with maturity, so the CDS slope should "
          "grow with tenor (CDS x maturity < 0).",
          "- **Captive demand:** if local Islamic banks are the marginal buyer, tight local funding (a wider "
-         "interbank spread) should *weaken* the discount (CDS x interbank > 0). The negative liquidity-gap "
+         "interbank spread) should *weaken* the premium (CDS x interbank > 0). The negative liquidity-gap "
          "coefficient fits the same story: sukuk that trade less are held to maturity by these banks and price "
          "richer, which is the opposite of a liquidity premium.\n",
          "## 2. Threshold shape\n",

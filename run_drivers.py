@@ -1,4 +1,4 @@
-"""Drivers of the sukuk discount: interbank funding, sukuk supply, and a PCA factor view.
+"""Drivers of the sukuk premium: interbank funding, sukuk supply, and a PCA factor view.
 
 Usage:
     .venv\\Scripts\\python run_drivers.py --session platform   # refresh interbank fixings, then analyse
@@ -62,7 +62,7 @@ def chart_pc1(res: dict, drivers: pd.DataFrame, out: Path, title: str) -> None:
     ax.axhline(0, color=INK2, linewidth=0.8)
     ax.plot(t, s.values, color=SUKUK_C, linewidth=2)
     ax.set_title(f"{title}: first common factor of the twin-curve basis "
-                 f"({res['share']['PC1']:.0%} of variance); higher = discount narrower", fontsize=10,
+                 f"({res['share']['PC1']:.0%} of variance); higher = premium narrower", fontsize=10,
                  color=INK, loc="left")
     ax2 = axes[1]
     _style(ax2)
@@ -129,7 +129,7 @@ def main(argv=None) -> int:
 
     ib_tbl = ib.assign(year=ib["month"].dt.year).groupby(["year", "country"])["ib_spread"].mean().unstack().round(0)
     iss_tbl = issuance.assign(year=issuance["month"].dt.year).groupby(["year", "country"])["sukuk_usd_bn"].sum().unstack().round(1)
-    L = ["# Drivers of the sukuk discount: funding, supply and a common factor\n",
+    L = ["# Drivers of the sukuk premium: funding, supply and a common factor\n",
          f"Generated {date.today():%Y-%m-%d}.\n",
          "## New variables\n",
          "- **Interbank spread (bp):** local 3-month fixing minus the 3-month US Treasury bill (SAIBOR "
@@ -167,7 +167,7 @@ def main(argv=None) -> int:
                                 "PC1_levels": res["loadings"]["PC1"].round(2).values,
                                 "PC1_changes": dres["loadings"]["PC1"].reindex(res["loadings"].index).round(2).values})),
               "\nWhat moves PC1? Coefficients are per one standard deviation of each driver (Newey-West t, 3 lags). "
-              "A positive coefficient means the driver narrows the discount (moves the basis toward zero).\n\n"
+              "A positive coefficient means the driver narrows the sukuk premium (moves the basis toward zero).\n\n"
               "**Levels:**\n\n", _md(lv), "\n**Monthly changes:**\n\n", _md(ch)]
     L += ["\n![PC1](drivers_pc1.png)\n",
           "\n## Caveats\n",

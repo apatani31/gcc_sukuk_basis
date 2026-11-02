@@ -40,7 +40,8 @@ def reading(summ: pd.DataFrame) -> list[str]:
     out = [f"- **Does it hold under all three rules?** {'Yes' if holds else 'Not under every rule'}: weak-credit "
            f"sukuk minus weak-credit conventional (medians) is {', '.join(f'{r} {g:+.1f}bp' for r, g in zip(core, gaps))}, "
            f"a range of {min(gaps):+.1f} to {max(gaps):+.1f}bp.",
-           f"- **MAIN:** weak-credit sukuk median {m.weak_sukuk_median_bp:+.1f}bp (n = {int(m.weak_sukuk_n)}) against "
+           f"- **MAIN:** weak-credit sukuk priced through the curve, median new-issue premium "
+           f"{m.weak_sukuk_median_bp:+.1f}bp (n = {int(m.weak_sukuk_n)}), against "
            f"{m.weak_conv_median_bp:+.1f}bp for weak-credit conventional bonds (n = {int(m.weak_conv_n)}) and "
            f"{m.other_sukuk_median_bp:+.1f}bp for other issuers' sukuk (Welch t {m.welch_t_weak_vs_other_sukuk:.1f}).",
            f"- **Dependence on Bahrain:** without Bahrain and BAPCO, MAIN leaves {int(mx.weak_sukuk_n)} weak-credit "
@@ -53,7 +54,7 @@ def reading(summ: pd.DataFrame) -> list[str]:
                        + (f", Welch t {exb.loc[r, 'welch_t_weak_vs_other_sukuk']:.1f})"
                           if pd.notna(exb.loc[r, 'welch_t_weak_vs_other_sukuk']) else ")")
                        for r in ("Robustness A", "Robustness B") if r in exb.index)
-           + ". The discount is smaller without Bahrain but keeps its sign."]
+           + ". The premium is smaller without Bahrain but keeps its sign."]
     return out
 
 
@@ -185,7 +186,7 @@ def main(argv=None) -> int:
          "the new bond's maturity with the same rules as twin.py (interpolation, or the US Treasury-adjusted "
          "nearest bond within 1 year). New conventional bonds are compared with the issuer's *other* "
          "conventional bonds the same way. *Sukuk minus conventional* nets out the ordinary new-issue concession, "
-         "leaving the primary-market sukuk discount.\n\n",
+         "leaving the primary-market sukuk premium: a negative value means the sukuk priced through the curve.\n\n",
          f"Matching status of new issues: {match_status}.\n\n",
          f"**Off-market deals excluded** (|premium| > {OFF_MARKET_BP:.0f}bp; e.g. 1% coupon official placements "
          "that are not market transactions):\n\n", _md(off) if len(off) else "_none_\n",

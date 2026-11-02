@@ -1,4 +1,4 @@
-"""Does the sukuk discount widen with credit stress? (issuer-month panel)
+"""Does the sukuk premium widen with credit stress? (issuer-month panel)
 
 Dependent variable: the twin-curve basis (sukuk yield minus same-maturity
 conventional yield, bp), averaged by issuer and month.
@@ -14,7 +14,7 @@ Credit measures:
 Liquidity control:
   liq_gap     sukuk minus conventional median bid-ask (bp of yield) for the
               issuer-month. Wider sukuk bid-asks would also make sukuk yields
-              look different, so the discount could be a liquidity effect.
+              look different, so the premium could be a liquidity effect.
 
 Inference: issuer-clustered standard errors and Driscoll-Kraay (robust to
 cross-issuer correlation in the same month). Clusters are few (about 16), so

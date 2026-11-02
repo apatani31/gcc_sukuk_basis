@@ -1,6 +1,6 @@
-# Policy numbers: what is the sukuk discount worth?
+# Policy numbers: what is the sukuk premium worth?
 
-Generated 2026-10-29. As of 2026-10-23.
+Generated 2026-11-01. As of 2026-10-23.
 
 ## a. Annual coupon saving by issuer
 
@@ -57,10 +57,10 @@ Sum across issuers: **102m a year** at trailing-12-month bases, **165m** at full
 | UAE (federal) |  | IG vs sub-IG dummy | -9.5 | [-46.1, 27.2] | 0.95 | [-2.72, 4.61] | 14 |
 
 
-**Reading:** these sovereigns are investment grade with low CDS, the region where the fitted models predict a small discount (the investment-grade issuers in the sample, such as KSA and Qatar, average single digits). The intervals are wide and include zero, so expect a saving of a few bp at most.
+**Reading:** these sovereigns are investment grade with low CDS, the region where the fitted models predict a small premium (the investment-grade issuers in the sample, such as KSA and Qatar, average single digits). The intervals are wide and include zero, so expect a saving of a few bp at most.
 
 ## Caveats
 
 - The saving applies today's basis to bonds issued years ago. It measures the current relative cost, not the saving each bond achieved at issue (see the primary-market check in data_quality_results.md).
-- Secondary-market sukuk quotes are staler than conventional ones (data_quality_results.md), so part of the measured discount may be quote smoothing.
+- Secondary-market sukuk quotes are staler than conventional ones (data_quality_results.md), so part of the measured premium may be quote smoothing.
 - Outstanding amounts are USD only, from the security universe.

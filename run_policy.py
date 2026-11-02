@@ -68,7 +68,7 @@ def chart_savings(s: pd.DataFrame, out: Path) -> None:
                     va="center", fontsize=7.5, color=INK2)
     ax.set_xlabel("Annual coupon saving from issuing sukuk, USD m (trailing 12-month basis x outstanding sukuk)",
                   color=INK2, fontsize=8.5)
-    ax.set_title("Sukuk cost advantage by issuer, with 90% intervals", fontsize=10, color=INK, loc="left")
+    ax.set_title("Lower funding cost from issuing sukuk, by issuer, with 90% intervals", fontsize=10, color=INK, loc="left")
     fig.tight_layout()
     fig.savefig(out, dpi=160, facecolor=SURFACE)
     plt.close(fig)
@@ -128,7 +128,7 @@ def main(argv=None) -> int:
 
     tot12 = sav["saving_12m_usd_m"].sum(skipna=True)
     totf = sav["saving_full_usd_m"].sum(skipna=True)
-    L = ["# Policy numbers: what is the sukuk discount worth?\n",
+    L = ["# Policy numbers: what is the sukuk premium worth?\n",
          f"Generated {date.today():%Y-%m-%d}. As of {asof:%Y-%m-%d}.\n",
          "## a. Annual coupon saving by issuer\n",
          "Saving (USD m a year) = USD sukuk outstanding (maturity after the as-of date; perpetuals excluded) x "
@@ -148,13 +148,13 @@ def main(argv=None) -> int:
          "Prediction intervals (90%) include the cross-issuer residual spread, which is large.\n\n",
          _md(targets.assign(cds=targets["cds"].round(1))), "\n", _md(cf),
          "\n**Reading:** these sovereigns are investment grade with low CDS, the region where the fitted models "
-         "predict a small discount (the investment-grade issuers in the sample, such as KSA and Qatar, average "
+         "predict a small premium (the investment-grade issuers in the sample, such as KSA and Qatar, average "
          "single digits). The intervals are wide and include zero, so expect a saving of a few bp at most.\n",
          "## Caveats\n",
          "- The saving applies today's basis to bonds issued years ago. It measures the current relative cost, "
          "not the saving each bond achieved at issue (see the primary-market check in data_quality_results.md).",
          "- Secondary-market sukuk quotes are staler than conventional ones (data_quality_results.md), so part "
-         "of the measured discount may be quote smoothing.",
+         "of the measured premium may be quote smoothing.",
          "- Outstanding amounts are USD only, from the security universe.\n"]
     (out / "policy_results.md").write_text("\n".join(L), encoding="utf-8")
     log.info("Savings:\n%s", sav.to_string(index=False))

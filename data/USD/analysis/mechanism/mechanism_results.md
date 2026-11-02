@@ -1,6 +1,6 @@
 # Mechanism, threshold and inference
 
-Generated 2026-10-29. Bootstrap: restricted wild cluster bootstrap-t, Webb six-point weights, 9,999 draws, clustered by government (6 CDS series) and by issuer. Coefficients are bp of basis per 100bp of sovereign CDS unless stated.
+Generated 2026-11-01. Bootstrap: restricted wild cluster bootstrap-t, Webb six-point weights, 9,999 draws, clustered by government (6 CDS series) and by issuer. Coefficients are bp of basis per 100bp of sovereign CDS unless stated.
 
 ## 1a. Sukuk structure
 
@@ -52,9 +52,9 @@ Bond-month regressions use each sukuk's monthly mean basis and remaining maturit
 
 
 How to read the predictions:
-- **Recovery / asset backing:** an Ijara sukuk is backed by a tangible asset, so if investors price recovery value the discount should *steepen* with CDS for Ijara (CDS x Ijara < 0).
+- **Recovery / asset backing:** an Ijara sukuk is backed by a tangible asset, so if investors price recovery value the premium should *steepen* with CDS for Ijara (CDS x Ijara < 0).
 - **Default / recovery over time:** expected loss accumulates with maturity, so the CDS slope should grow with tenor (CDS x maturity < 0).
-- **Captive demand:** if local Islamic banks are the marginal buyer, tight local funding (a wider interbank spread) should *weaken* the discount (CDS x interbank > 0). The negative liquidity-gap coefficient fits the same story: sukuk that trade less are held to maturity by these banks and price richer, which is the opposite of a liquidity premium.
+- **Captive demand:** if local Islamic banks are the marginal buyer, tight local funding (a wider interbank spread) should *weaken* the premium (CDS x interbank > 0). The negative liquidity-gap coefficient fits the same story: sukuk that trade less are held to maturity by these banks and price richer, which is the opposite of a liquidity premium.
 
 ## 2. Threshold shape
 

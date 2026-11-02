@@ -1,6 +1,6 @@
 # Oil shocks and the twin curves: event study
 
-Generated 2026-10-29. Shock rule: Brent front-month 1-day move, net of S&P 500 (rolling beta), |z| >= 3 vs trailing 250 days AND raw move >= 5%; up/down selected separately, 20 business days apart (oil_shocks_z3_min5pct_h1.csv).
+Generated 2026-11-01. Shock rule: Brent front-month 1-day move, net of S&P 500 (rolling beta), |z| >= 3 vs trailing 250 days AND raw move >= 5%; up/down selected separately, 20 business days apart (oil_shocks_z3_min5pct_h1.csv).
 
 ## Design
 

@@ -1,6 +1,6 @@
-# Drivers of the sukuk discount: funding, supply and a common factor
+# Drivers of the sukuk premium: funding, supply and a common factor
 
-Generated 2026-10-29.
+Generated 2026-11-01.
 
 ## New variables
 
@@ -112,7 +112,7 @@ PC1 loadings (levels / changes):
 | Sharjah, Emirate Of | 0.34 | 0.43 |
 
 
-What moves PC1? Coefficients are per one standard deviation of each driver (Newey-West t, 3 lags). A positive coefficient means the driver narrows the discount (moves the basis toward zero).
+What moves PC1? Coefficients are per one standard deviation of each driver (Newey-West t, 3 lags). A positive coefficient means the driver narrows the sukuk premium (moves the basis toward zero).
 
 **Levels:**
 
@@ -184,7 +184,7 @@ PC1 loadings (levels / changes):
 | Sharjah, Emirate Of | 0.06 | 0.63 |
 
 
-What moves PC1? Coefficients are per one standard deviation of each driver (Newey-West t, 3 lags). A positive coefficient means the driver narrows the discount (moves the basis toward zero).
+What moves PC1? Coefficients are per one standard deviation of each driver (Newey-West t, 3 lags). A positive coefficient means the driver narrows the sukuk premium (moves the basis toward zero).
 
 **Levels:**
 

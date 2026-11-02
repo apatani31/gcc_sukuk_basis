@@ -160,7 +160,9 @@ def write_report(panel: pd.DataFrame, b: pd.DataFrame, gaps: pd.DataFrame, out_d
          f"within {cfg['nearest_max_gap']:g} year is used, shifted along that day's US Treasury curve to the "
          "sukuk's maturity: y_near + UST(sukuk maturity) - UST(nearest maturity). Share per issuer: "
          "`share_nearest_adj`. **Basis = sukuk yield minus matched conventional yield, in bp.** "
-         "Negative means the sukuk yields less than the issuer's own conventional curve.",
+         "Negative means the sukuk yields less than the issuer's own conventional curve, i.e. it trades rich to "
+         "that curve: a **sukuk premium** (a price premium, equivalently a yield gap). A more negative basis is a "
+         "larger premium.",
          "- **Excluded:** " + (", ".join(cfg.get("exclude_parents", [])) or "none") + " (amortizing aircraft "
          "sukuk: yield to final maturity is not comparable).",
          f"- **Inference:** per issuer, the daily average basis is a time series; its mean has a Newey-West "

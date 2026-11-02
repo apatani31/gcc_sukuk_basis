@@ -1,12 +1,12 @@
 # Within-issuer twin-curve analysis: GCC sukuk vs conventional (USD)
 
-Generated 2026-10-25 from `data/USD/timeseries`.
+Generated 2026-11-01 from `data/USD/timeseries`.
 
 ## Method
 
 - **Sample:** plain fixed-coupon bonds of at least $100m, one line per bond, issuers with both sukuk and conventional bonds (same Sukuk Obligor / Borrower). Yield = LSEG mid YTM (bid/ask average where mid is missing).
 - **Cleaning:** 1-30 years to maturity; yields in (0, 25)%; drop points more than 1.5pp from a 21-day rolling median; drop stale runs of 5+ identical prices and bonds stale on > 50% of days. Kept 330,031 of 359,606 bond-days (dropped: yield_bounds 1,041, tau_range 24,991, outliers 97, stale 3,446).
-- **Tenor matching:** for each sukuk on each day, the issuer's conventional yields that day are linearly interpolated at the sukuk's remaining maturity, using only the two conventional bonds that bracket it (no extrapolation). If no two bonds bracket it, the nearest conventional bond within 1 year is used, shifted along that day's US Treasury curve to the sukuk's maturity: y_near + UST(sukuk maturity) - UST(nearest maturity). Share per issuer: `share_nearest_adj`. **Basis = sukuk yield minus matched conventional yield, in bp.** Negative means the sukuk yields less than the issuer's own conventional curve.
+- **Tenor matching:** for each sukuk on each day, the issuer's conventional yields that day are linearly interpolated at the sukuk's remaining maturity, using only the two conventional bonds that bracket it (no extrapolation). If no two bonds bracket it, the nearest conventional bond within 1 year is used, shifted along that day's US Treasury curve to the sukuk's maturity: y_near + UST(sukuk maturity) - UST(nearest maturity). Share per issuer: `share_nearest_adj`. **Basis = sukuk yield minus matched conventional yield, in bp.** Negative means the sukuk yields less than the issuer's own conventional curve, i.e. it trades rich to that curve: a **sukuk premium** (a price premium, equivalently a yield gap). A more negative basis is a larger premium.
 - **Excluded:** emirates (amortizing aircraft sukuk: yield to final maturity is not comparable).
 - **Inference:** per issuer, the daily average basis is a time series; its mean has a Newey-West standard error (20 lags). Across issuers, each issuer's mean counts once, so KSA and Bahrain do not dominate. Issuers need at least 20 matched days.
 

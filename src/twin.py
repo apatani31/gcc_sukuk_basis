@@ -16,7 +16,7 @@ B. Standard-tenor gap (robustness). Both curves are interpolated at 3/5/7/10y
    when each brackets that tenor; gap = y_sukuk_curve - y_conv_curve.
 
 Negative basis = sukuk yield below the issuer's own conventional curve
-(sukuk trade rich); positive = sukuk premium.
+(sukuk trade rich: a sukuk premium); positive = sukuk trade cheap to the curve.
 """
 from __future__ import annotations
 

@@ -111,6 +111,22 @@ charts. Method and caveats are documented in the report. Filters and tunables
 live in `TWIN` in `src/config.py`. `--min-amount 0` re-runs with small issues
 included.
 
+**Sign and terminology** (used in every report):
+
+- **Basis** = sukuk yield minus the issuer's conventional yield at the same
+  maturity, in bp. A **negative basis** means the sukuk yields less, so it
+  trades **rich** to the issuer's curve (a higher price).
+- The effect is the **sukuk premium**: a price premium, equivalently a yield
+  gap. A more negative basis is a larger premium ("sukuk trade richer"), and
+  "the premium widens / narrows" means the basis moves further below zero /
+  back toward zero.
+- **Cheap** means a high yield (a low price), never a low-yield bond. From the
+  issuer's side, a sukuk premium is a **lower funding cost** or **lower
+  coupon**.
+- The **new-issue premium (NIP)** is measured in yield: positive means the new
+  bond came cheap to the curve (the ordinary concession); a negative sukuk NIP
+  means the sukuk **priced through the curve**.
+
 ## Oil shock definition
 
 ```bash
@@ -140,7 +156,7 @@ a volatility-matched placebo (median), clean-window, excluding-2020 and
 multi-shock-episode checks, and the sukuk-on-conventional pass-through after
 shocks compared with normal days. Output: `data/USD/analysis/event_study/event_study.md`.
 
-## Credit stress and the sukuk discount
+## Credit stress and the sukuk premium
 
 ```bash
 .venv/Scripts/python run_credit.py --session platform   # pull sovereign CDS, then analyse
@@ -188,7 +204,7 @@ weights, `src/inference.py`). Start with `data/USD/analysis/synthesis.md`.
 ## Primary-market check: the new-issue premium
 
 `run_data_quality.py` (section d, `new_issue_premia` in `src/data_quality.py`)
-tests whether the sukuk discount exists in actual transactions, not only in
+tests whether the sukuk premium exists in actual transactions, not only in
 secondary quotes. For each new fixed-rate bond of a twin issuer:
 
 ```

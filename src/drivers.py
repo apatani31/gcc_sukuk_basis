@@ -5,7 +5,7 @@
   that hold most sukuk).
 - Sukuk issuance: USD sukuk and conventional bond issuance by country of risk,
   from the security universe. Tests a supply / scarcity explanation: more
-  sukuk supply should shrink the discount.
+  sukuk supply should shrink the premium.
 - PCA on the issuer-by-month basis panel: is there a common GCC-wide factor,
   and what moves it?
 """

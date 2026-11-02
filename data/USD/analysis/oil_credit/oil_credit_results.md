@@ -1,6 +1,6 @@
 # Oil through credit
 
-Generated 2026-10-29. Shocks: `oil_shocks_z3_min5pct_h1.csv` (same as the basis event study).
+Generated 2026-11-01. Shocks: `oil_shocks_z3_min5pct_h1.csv` (same as the basis event study).
 
 ## a. Do oil shocks move sovereign CDS?
 

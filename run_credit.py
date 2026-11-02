@@ -48,7 +48,7 @@ def chart_cross_issuer(iss: pd.DataFrame, out: Path) -> None:
                  fontsize=7, color=INK2, wrap=True)
     ax.set_xlabel("Mean sovereign 5y CDS of the issuer's government (bp)", color=INK2, fontsize=9)
     ax.set_ylabel("Mean twin-curve basis (bp)", color=INK2, fontsize=9)
-    ax.set_title("Sukuk discount vs credit risk, one point per issuer (below zero = sukuk yield less)",
+    ax.set_title("Sukuk premium vs credit risk, one point per issuer (below zero = sukuk trade rich to the issuer's curve)",
                  fontsize=10, color=INK, loc="left")
     fig.tight_layout(rect=(0, 0.05, 1, 1))
     fig.savefig(out, dpi=160, facecolor=SURFACE)
@@ -79,7 +79,7 @@ def chart_case_studies(panel: pd.DataFrame, out: Path) -> None:
         bot.plot(t, d["cds"], color=CONV_C, linewidth=2)
         top.set_title(f"{name.split(',')[0]}: basis (bp)", fontsize=10, color=INK, loc="left")
         bot.set_title("Government 5y CDS (bp)", fontsize=9, color=INK2, loc="left")
-    fig.suptitle("Within issuers: the sukuk discount widens when the government's CDS rises (Bahrain, Oman); "
+    fig.suptitle("Within issuers: the sukuk premium widens when the government's CDS rises (Bahrain, Oman); "
                  "KSA's CDS barely moves", fontsize=10.5, color=INK, x=0.01, ha="left")
     fig.tight_layout(rect=(0, 0, 1, 0.95))
     fig.savefig(out, dpi=160, facecolor=SURFACE)
@@ -154,7 +154,7 @@ def main(argv=None) -> int:
                 f"{r.slope_levels_per_100bp:+.1f}bp per 100bp in levels (Newey-West t {r.t_nw_levels:.1f}), "
                 f"{r.slope_changes_per_100bp:+.1f}bp in monthly changes (t {r.t_nw_changes:.1f}).")
 
-    L = ["# Credit stress and the sukuk discount\n",
+    L = ["# Credit stress and the sukuk premium\n",
          f"Generated {date.today():%Y-%m-%d}. Issuer-month panel from the twin-curve basis.\n",
          "## What the evidence supports\n",
          "The claim rests on three pieces, in this order of strength:\n",
@@ -166,7 +166,7 @@ def main(argv=None) -> int:
          f"sovereign, which was sub-IG for most of the sample) average {sub_mean:.0f}bp against {ig_mean:.0f}bp for "
          f"investment-grade issuers: a gap of {gap['coef']:.0f}bp, wild cluster bootstrap p = {fmt_p(gap['p_wild'])} "
          f"clustering by obligor group ({gap['clusters']} clusters).",
-         "2. **Case studies within issuers.** The two governments whose CDS moved most show the discount "
+         "2. **Case studies within issuers.** The two governments whose CDS moved most show the sukuk premium "
          "widening as credit risk rises, in levels and in monthly changes:",
          case_line("Oman, Sultanate of (Government)"), case_line("Bahrain, Kingdom of (Government)"),
          case_line("BAPCO Energies BSCC Closed"),
@@ -196,7 +196,7 @@ def main(argv=None) -> int:
          f"common monthly shocks), plus restricted wild cluster bootstrap p-values (Webb weights, {a.draws:,} "
          "draws) by government and by issuer. Issuers without a sovereign CDS form their own government "
          "cluster.\n",
-         "## Across issuers: is the discount bigger for weaker credits?\n",
+         "## Across issuers: is the sukuk premium bigger for weaker credits?\n",
          "![cross issuer](credit_cross_issuer.png)\n",
          _md(xs),
          "\n## Panel regressions within issuers\n",
@@ -214,11 +214,11 @@ def main(argv=None) -> int:
          "That is why the case studies, not the panel t-stat, carry the within-issuer claim.",
          "- **Across issuers:** the cross-sectional slope depends on Bahrain (sovereign and BAPCO). Without it "
          "there is no gradient among issuers with CDS below about 100bp. Describe the cross-section as a "
-         "threshold (large discounts for the sub-investment-grade sovereigns, small elsewhere), not a "
+         "threshold (large premiums for the sub-investment-grade sovereigns, small elsewhere), not a "
          "smooth gradient.",
          "- **Liquidity:** the liquidity-gap coefficient is *negative*: months when sukuk are relatively less "
          "liquid are months when they yield relatively *less*. A liquidity premium would show the opposite "
-         "sign, so liquidity does not explain the discount.\n",
+         "sign, so liquidity does not explain the premium.\n",
          "\n## Issuer means\n",
          _md(iss[["parent_name", "cds_sovereign", "months", "basis", "cds", "spread_conv", "ba_sukuk",
                   "ba_conv", "liq_gap"]]),

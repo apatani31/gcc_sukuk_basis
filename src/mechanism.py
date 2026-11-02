@@ -1,4 +1,4 @@
-"""Why do weak credits get a bigger sukuk discount? Mechanism, threshold and inference.
+"""Why do weak credits get a bigger sukuk premium? Mechanism, threshold and inference.
 
 1. Mechanism
    a. Structure: basis by sukuk structure, within issuers that use several;
@@ -7,7 +7,7 @@
    b. Tenor: CDS x remaining maturity at bond-month level. A default/recovery
       story predicts a slope that grows with maturity.
    c. Captive demand: CDS x local interbank spread. If Islamic banks are the
-      marginal buyer, tight local liquidity should weaken the discount.
+      marginal buyer, tight local liquidity should weaken the premium.
 2. Threshold: investment-grade vs sub-IG dummy (snapshot ratings) and a
    piecewise-linear CDS spline with the kink chosen on a grid, within and
    across issuers.
