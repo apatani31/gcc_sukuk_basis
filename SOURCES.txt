@@ -118,7 +118,6 @@ Rating-history tables (most 2016-2022 dates; cross-checked where possible):
 Agency releases and government statements:
   MoF statement (Oman, S&P upgrade to BBB-, 2024-09-27)
     https://www.mof.gov.om/download.aspx?id=L1VwbG9hZHNBbGwvUHJvamVjdHNTZWN0aW9uc1RhYnMvMTcyNzY5MzEzOTMxME9tYW4gUmVnYWlucyBJbnZlc3RtZW50IEdyYWRlMS5wZGY%3D
-    https://www.fm.gov.om/en/32215/
   Fitch release (Oman upgrade to BBB-, 2025-12-08; via Reuters/TradingView)
     https://www.tradingview.com/news/reuters.com,2025-12-08:newsml_FIT86ngG8:0-fitch-upgrades-oman-to-bbb-outlook-stable/
   Moody's release (Sharjah downgrade to Baa3, 2021-02-11; via Yahoo Finance)
