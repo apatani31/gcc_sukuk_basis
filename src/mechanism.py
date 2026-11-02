@@ -169,7 +169,52 @@ def inference_table(im: pd.DataFrame, B: int = 9999) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # 8b. Time-varying sub-IG classification
 # ---------------------------------------------------------------------------
-def time_varying_threshold(im: pd.DataFrame, flag: str, label: str, B: int = 9999) -> list[dict]:
+def add_rating_flags(im: pd.DataFrame, ratings: pd.DataFrame) -> pd.DataFrame:
+    """Add monthly rating status to an issuer-month panel (`month` as 'YYYY-MM' strings).
+
+    government (owner, ratings.ISSUER_GOVERNMENT), sub_rating (MAIN: 2 of 3 agencies below BBB-/Baa3),
+    sub_lowest (lowest available rating below), single_agency. NaN where no government rating applies."""
+    from .ratings import ISSUER_GOVERNMENT, monthly_status
+
+    months = pd.PeriodIndex(sorted(im["month"].unique()), freq="M")
+    ms = monthly_status(ratings, months)
+    ms["month"] = ms["month"].astype(str)
+    ms["sub_lowest"] = (ms["agencies_below_ig"] >= 1).astype(float).where(ms["agencies_rating"] > 0)
+    out = im.assign(government=im["parent_key"].map(ISSUER_GOVERNMENT))
+    return out.merge(ms[["government", "month", "sub_ig", "sub_lowest", "single_agency"]].rename(
+        columns={"sub_ig": "sub_rating"}), on=["government", "month"], how="left")
+
+
+def sharjah_text(im: pd.DataFrame, ratings: pd.DataFrame) -> str:
+    """Computed statement on Sharjah, the split-rated exception to the 2-of-3 rule."""
+    r = ratings[ratings["government"] == "Sharjah"].sort_values("date")
+    last = r.groupby("agency").tail(1)
+    now = ", ".join(f"{a.agency} {a.rating}" for a in last.itertuples())
+    s = im[im["parent_key"] == "emirate sharjah"].dropna(subset=["basis"])
+    first_below = r.loc[r["sub_ig"].map(lambda v: v is True or v == 1), "date"].min()
+    cut = first_below.to_period("M")
+    m = pd.PeriodIndex(s["month"], freq="M")
+    pre, post = s.loc[m <= cut, "basis"], s.loc[m > cut, "basis"]
+    return (f"**Sharjah is the exception.** Its mean basis is {s['basis'].mean():.0f}bp, in line with the sub-IG "
+            f"group, but it counts as investment grade under the 2-of-3 rule: its latest ratings are {now}, and "
+            "Fitch does not rate it, so only one of the two rating agencies is below the line. It is split rated, and "
+            f"the lowest-rating rule treats it as sub-IG from {first_below:%Y-%m-%d}. Its sukuk premium does not "
+            f"start there: the basis averages {pre.mean():.0f}bp in the {len(pre)} months up to that action, when both "
+            f"agencies had it at investment grade, and {post.mean():.0f}bp in the {len(post)} months after. So the "
+            "premium is concentrated in sub-IG credits but is not exclusive to them, and the rating line is an "
+            "approximation of whatever investors are pricing.")
+
+
+def rating_groups(im: pd.DataFrame, flag: str = "sub_rating") -> pd.DataFrame:
+    """Mean basis and CDS per issuer and rating status (one row per issuer x status)."""
+    d = im.dropna(subset=["basis", flag])
+    g = (d.groupby(["parent_key", "parent_name", flag])
+          .agg(months=("month", "size"), basis=("basis", "mean"), cds=("cds", "mean")).reset_index()
+          .rename(columns={flag: "sub_ig_at_the_time"}))
+    return g.sort_values(["sub_ig_at_the_time", "cds"]).reset_index(drop=True)
+
+
+def time_varying_threshold(im: pd.DataFrame, flag: str, label: str, B: int = 9999, slopes: bool = True) -> list[dict]:
     """Level gap and extra within slope with a monthly sub-IG flag (column `flag`, 0/1).
 
     Level gap: issuer-month basis on the flag, no fixed effects (cross-sectional and over time),
@@ -180,7 +225,10 @@ def time_varying_threshold(im: pd.DataFrame, flag: str, label: str, B: int = 999
     switchers = d.groupby("parent_key")["sub_t"].nunique()
     note = f"{int((d['sub_t'] == 1).sum())} sub-IG obligor-months; issuers switching status: {int((switchers > 1).sum())}"
     rows = [reg_row(f"{label}: level gap, sub-IG minus IG (obligor-months)", "basis ~ sub_t", d, "sub_t", B,
-                    {"note": note})]
+                    {"note": note, "sub_ig_mean_bp": round(d.loc[d["sub_t"] == 1, "basis"].mean(), 1),
+                     "ig_mean_bp": round(d.loc[d["sub_t"] == 0, "basis"].mean(), 1)})]
+    if not slopes:
+        return rows
     dc = d.dropna(subset=["cds"])
     rows.append(reg_row(f"{label}: CDS slope when IG", "basis ~ cds100 + sub_t + cds100:sub_t + C(parent_key)",
                         dc, "cds100", B))

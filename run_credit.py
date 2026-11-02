@@ -17,7 +17,8 @@ import pandas as pd
 from src import config as C
 from src.credit import build_panel, cross_issuer, leave_one_sovereign_out, pull_cds, within_issuer
 from src.inference import fmt_p, issuer_slopes, wild_cluster_bootstrap
-from src.mechanism import issuer_ratings
+from src.mechanism import add_rating_flags, issuer_ratings, sharjah_text, time_varying_threshold
+from src.ratings import load_ratings
 from src.summary import _md
 from src.twin import load_panel
 from src.twin_report import CONV_C, INK, INK2, SUKUK_C, SURFACE, _style
@@ -131,11 +132,26 @@ def main(argv=None) -> int:
     sub_mean = lvd.loc[lvd["sub"] == 1, "basis"].mean()
     ig_mean = lvd.loc[lvd["sub"] == 0, "basis"].mean()
     case = slopes.set_index("issuer")
+
+    # Lead specification: rating at the time (2 of 3 agencies), same panel and rule as mechanism_results.md
+    rt = load_ratings(C.SOVEREIGN_RATINGS_PATH)
+    pm = panel.assign(month=panel["month"].astype(str), cds100=panel["cds"] / 100,
+                      cds_sovereign=panel["cds_sovereign"].fillna(panel["parent_name"]))
+    pm["t"] = pm["month"]
+    pm = add_rating_flags(pm, rt)
+    tv = time_varying_threshold(pm, "sub_rating", "Ratings at the time, 2 of 3 agencies", B=a.draws, slopes=False)[0]
+    pm["sub_ex_sharjah"] = pm["sub_rating"].where(pm["government"] != "Sharjah")
+    tv_xs = time_varying_threshold(pm, "sub_ex_sharjah", "Sharjah excluded", B=a.draws, slopes=False)[0]
     pd.DataFrame([{"issuers": n_all, "issuers_negative": n_neg, "governments": len(gov_means),
-                   "governments_negative": int((gov_means < 0).sum()), "sub_ig_mean_bp": round(sub_mean, 1),
-                   "ig_mean_bp": round(ig_mean, 1), "gap_bp": round(gap["coef"], 1),
-                   "p_wild_government": round(gap["p_wild"], 3), "clusters": gap["clusters"]}]).to_csv(
-        out / "credit_level_gap.csv", index=False)
+                   "governments_negative": int((gov_means < 0).sum()),
+                   "sub_ig_mean_bp": tv["sub_ig_mean_bp"], "ig_mean_bp": tv["ig_mean_bp"],
+                   "gap_bp": round(tv["coef_bp"], 1), "p_wild_government": tv["p_wild_government"],
+                   "p_wild_issuer": tv["p_wild_issuer"], "obligor_months": tv["n_obs"], "rated_issuers": tv["issuers"],
+                   "gap_ex_sharjah_bp": round(tv_xs["coef_bp"], 1),
+                   "p_wild_government_ex_sharjah": tv_xs["p_wild_government"],
+                   "snapshot_sub_ig_mean_bp": round(sub_mean, 1), "snapshot_ig_mean_bp": round(ig_mean, 1),
+                   "snapshot_gap_bp": round(gap["coef"], 1), "snapshot_p_wild_government": round(gap["p_wild"], 3),
+                   "snapshot_clusters": gap["clusters"]}]).to_csv(out / "credit_level_gap.csv", index=False)
     loo.to_csv(out / "credit_leave_one_out.csv", index=False)
     panel.assign(month=panel["month"].astype(str)).to_csv(out / "credit_panel_issuer_month.csv", index=False)
     within.to_csv(out / "credit_within_issuer.csv", index=False)
@@ -162,10 +178,17 @@ def main(argv=None) -> int:
          f"average is negative in {int((gov_means < 0).sum())} of {len(gov_means)} obligor groups (issuers grouped "
          "by the government whose credit backs them; Sharjah and the multilateral Arab Energy Fund form their own "
          "groups). "
-         f"Sub-investment-grade issuers (Bahrain, BAPCO, Sharjah, Oman Electricity Transmission, and the Oman "
-         f"sovereign, which was sub-IG for most of the sample) average {sub_mean:.0f}bp against {ig_mean:.0f}bp for "
-         f"investment-grade issuers: a gap of {gap['coef']:.0f}bp, wild cluster bootstrap p = {fmt_p(gap['p_wild'])} "
-         f"clustering by obligor group ({gap['clusters']} clusters).",
+         "Classifying each obligor-month by its government's rating at the time (sub-IG if at least two of S&P, "
+         f"Moody's and Fitch are below BBB-/Baa3; Dubai via its DEWA proxy), sub-IG months average "
+         f"{tv['sub_ig_mean_bp']:.0f}bp against {tv['ig_mean_bp']:.0f}bp for investment-grade months: a gap of "
+         f"{tv['coef_bp']:.0f}bp, wild cluster bootstrap p = {fmt_p(tv['p_wild_government'])} clustering by obligor "
+         f"group, {fmt_p(tv['p_wild_issuer'])} by issuer ({tv['n_obs']} obligor-months, {tv['issuers']} issuers; the "
+         "multilateral Arab Energy Fund has no government rating). "
+         f"Without Sharjah the gap is {tv_xs['coef_bp']:.0f}bp (p = {fmt_p(tv_xs['p_wild_government'])}). "
+         f"For comparison, export-date snapshot ratings with the Oman sovereign counted as sub-IG, which put Sharjah "
+         f"in the sub-IG group, give {sub_mean:.0f}bp against {ig_mean:.0f}bp: a gap of {gap['coef']:.0f}bp "
+         f"(p = {fmt_p(gap['p_wild'])}, {gap['clusters']} clusters). See mechanism_results.md, section 8.\n\n"
+         f"   {sharjah_text(pm, rt)}\n",
          "2. **Case studies within issuers.** The two governments whose CDS moved most show the sukuk premium "
          "widening as credit risk rises, in levels and in monthly changes:",
          case_line("Oman, Sultanate of (Government)"), case_line("Bahrain, Kingdom of (Government)"),

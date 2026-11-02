@@ -56,9 +56,9 @@ How to read the predictions:
 - **Default / recovery over time:** expected loss accumulates with maturity, so the CDS slope should grow with tenor (CDS x maturity < 0).
 - **Captive demand:** if local Islamic banks are the marginal buyer, tight local funding (a wider interbank spread) should *weaken* the premium (CDS x interbank > 0). The negative liquidity-gap coefficient fits the same story: sukuk that trade less are held to maturity by these banks and price richer, which is the opposite of a liquidity premium.
 
-## 2. Threshold shape
+## 2. Threshold shape (snapshot ratings, for comparison)
 
-Ratings are a **snapshot as of the export**, not a history. The Oman sovereign shows Baa3 (investment grade) after its 2024 upgrades, but it was rated below investment grade for most of the sample, so a variant counts it as sub-IG. The CDS spline does not need ratings because CDS varies over time.
+**The lead classification is the time-varying rating rule in section 8.** This section uses ratings as a **snapshot as of the export**, not a history, and is kept for comparison. The Oman sovereign shows Baa3 (investment grade) after its 2024-2025 upgrades, but it was rated below investment grade for most of the sample, so a variant counts it as sub-IG. Snapshot ratings also count Sharjah as sub-IG (Moody's Ba1), unlike the 2-of-3 rule. The CDS spline does not need ratings because CDS varies over time.
 
 
 | parent_name | rating_snapshot | sub_ig | sub_ig_oman | cds | basis | months |
@@ -94,9 +94,6 @@ Ratings are a **snapshot as of the export**, not a history. The Oman sovereign s
 | Across issuers incl. Dubai govt: spline, extra slope above best kink (150bp) | h | -115.41 | -2.41 | 16 | 16 | 0.244 | 0.171 | kink chosen on the grid (search not reflected in p-values) |
 | Across issuers excl. Dubai govt: spline, extra slope above best kink (70bp) | h | -57.17 | -3.09 | 15 | 15 | 0.017 | 0.017 | kink chosen on the grid (search not reflected in p-values) |
 | Within issuers: spline, extra slope above best kink (170bp) | h | -43.29 | -2.46 | 850 | 16 | 0.059 | 0.016 | kink chosen on the grid (search not reflected in p-values) |
-
-
-![threshold](mechanism_threshold_cross.png)
 
 
 ![profile](mechanism_spline_profile.png)
@@ -166,25 +163,60 @@ Spline profiles (fit for each kink location):
 | 300 | 0.64 | -16.2 | -29.9 | 57 | False |
 
 
-## 8. Time-varying classification
+## 8. Time-varying classification (the lead specification)
 
-Snapshot ratings misclassify issuers whose rating changed (Oman). Here the sub-IG flag varies by obligor-month. The CDS rule marks a month sub-IG when the government's 5y CDS exceeds 150bp. The rating rule needs at least two of S&P, Moody's and Fitch below BBB-/Baa3 (a single rating agency decides only where just one rates the government). Level gaps use obligor-months without fixed effects; the extra slope uses issuer fixed effects. Wild bootstrap clusters are obligor groups (government, or the issuer itself where no government CDS applies).
+Snapshot ratings misclassify issuers whose rating changed (Oman). Here the sub-IG flag varies by obligor-month, and **the 2-of-3 rating rule is the lead specification** in the credit report and the synthesis: at least two of S&P, Moody's and Fitch below BBB-/Baa3 (a single rating agency decides only where just one rates the government). Robustness rows: Dubai excluded, Sharjah excluded, the lowest available rating, and a CDS rule (government 5y CDS above 150bp that month). Level gaps use obligor-months without fixed effects; the extra slope uses issuer fixed effects. Wild bootstrap clusters are obligor groups (government, or the issuer itself where no government CDS applies). `coef_bp` for the level gap equals `sub_ig_mean_bp` minus `ig_mean_bp`.
 
 
 Ratings file: `sovereign_ratings.csv` (89 rating rows). Single-agency obligor-months: 0. **Dubai:** the government is not rated by S&P, Moody's or Fitch, so its rows are the ratings of a government-related entity (DEWA proxy); the rationale is in README.md (Design decisions). Dubai is investment grade in every month on this proxy, and the *Dubai excluded* rows show the result without it. **Sharjah** counts as investment grade under the 2-of-3 rule: Fitch does not rate it, S&P has it at BBB- and Moody's at Ba1, so only one of the two rating agencies is below the line.
 
 
-| model | term | coef_bp | t_cluster_issuer | n_obs | issuers | p_wild_government | p_wild_issuer | note |
-|---|---|---|---|---|---|---|---|---|
-| CDS > 150bp: level gap, sub-IG minus IG (obligor-months) | sub_t | -54.65 | -5.66 | 850 | 16 | 0.077 | 0.022 | 247 sub-IG obligor-months; issuers switching status: 4 |
-| CDS > 150bp: CDS slope when IG | cds100 | 16.47 | 0.98 | 850 | 16 | 0.659 | 0.364 |  |
-| CDS > 150bp: extra CDS slope when sub-IG | cds100:sub_t | -45.28 | -2.39 | 850 | 16 | 0.375 | 0.081 |  |
-| Ratings, 2 of 3 agencies below BBB-/Baa3: level gap, sub-IG minus IG (obligor-months) | sub_t | -58.25 | -5.89 | 924 | 17 | 0.038 | 0.014 | 256 sub-IG obligor-months; issuers switching status: 1 |
-| Ratings, 2 of 3 agencies below BBB-/Baa3: CDS slope when IG | cds100 | 10.37 | 1.09 | 850 | 16 | 0.085 | 0.303 |  |
-| Ratings, 2 of 3 agencies below BBB-/Baa3: extra CDS slope when sub-IG | cds100:sub_t | -34.95 | -3.25 | 850 | 16 | 0.038 | 0.014 |  |
-| Ratings, Dubai excluded (robustness): level gap, sub-IG minus IG (obligor-months) | sub_t | -56.38 | -5.6 | 754 | 13 | 0.074 | 0.009 | 256 sub-IG obligor-months; issuers switching status: 1 |
-| Ratings, Dubai excluded (robustness): CDS slope when IG | cds100 | 8.79 | 2.2 | 680 | 12 | 0.357 | 0.098 |  |
-| Ratings, Dubai excluded (robustness): extra CDS slope when sub-IG | cds100:sub_t | -33.36 | -5.64 | 680 | 12 | 0.096 | 0.039 |  |
+| model | term | coef_bp | t_cluster_issuer | n_obs | issuers | p_wild_government | p_wild_issuer | note | sub_ig_mean_bp | ig_mean_bp |
+|---|---|---|---|---|---|---|---|---|---|---|
+| CDS > 150bp: level gap, sub-IG minus IG (obligor-months) | sub_t | -54.65 | -5.66 | 850 | 16 | 0.077 | 0.022 | 247 sub-IG obligor-months; issuers switching status: 4 | -62.5 | -7.9 |
+| CDS > 150bp: CDS slope when IG | cds100 | 16.47 | 0.98 | 850 | 16 | 0.659 | 0.364 |  |  |  |
+| CDS > 150bp: extra CDS slope when sub-IG | cds100:sub_t | -45.28 | -2.39 | 850 | 16 | 0.375 | 0.081 |  |  |  |
+| Ratings, 2 of 3 agencies below BBB-/Baa3: level gap, sub-IG minus IG (obligor-months) | sub_t | -58.25 | -5.89 | 924 | 17 | 0.038 | 0.014 | 256 sub-IG obligor-months; issuers switching status: 1 | -67.6 | -9.4 |
+| Ratings, 2 of 3 agencies below BBB-/Baa3: CDS slope when IG | cds100 | 10.37 | 1.09 | 850 | 16 | 0.085 | 0.303 |  |  |  |
+| Ratings, 2 of 3 agencies below BBB-/Baa3: extra CDS slope when sub-IG | cds100:sub_t | -34.95 | -3.25 | 850 | 16 | 0.038 | 0.014 |  |  |  |
+| Ratings, Dubai excluded (robustness): level gap, sub-IG minus IG (obligor-months) | sub_t | -56.38 | -5.6 | 754 | 13 | 0.074 | 0.009 | 256 sub-IG obligor-months; issuers switching status: 1 | -67.6 | -11.2 |
+| Ratings, Dubai excluded (robustness): CDS slope when IG | cds100 | 8.79 | 2.2 | 680 | 12 | 0.357 | 0.098 |  |  |  |
+| Ratings, Dubai excluded (robustness): extra CDS slope when sub-IG | cds100:sub_t | -33.36 | -5.64 | 680 | 12 | 0.096 | 0.039 |  |  |  |
+| Ratings, Sharjah excluded (robustness): level gap, sub-IG minus IG (obligor-months) | sub_t | -62.07 | -6.68 | 857 | 16 | 0.007 | 0.008 | 256 sub-IG obligor-months; issuers switching status: 1 | -67.6 | -5.5 |
+| Lowest rating below BBB-/Baa3 (robustness): level gap, sub-IG minus IG (obligor-months) | sub_t | -54.33 | -5.78 | 924 | 17 | 0.013 | 0.001 | 318 sub-IG obligor-months; issuers switching status: 3 | -61.1 | -6.8 |
+| Lowest rating below BBB-/Baa3 (robustness): CDS slope when IG | cds100 | 9.99 | 0.84 | 850 | 16 | 0.35 | 0.409 |  |  |  |
+| Lowest rating below BBB-/Baa3 (robustness): extra CDS slope when sub-IG | cds100:sub_t | -34.31 | -2.67 | 850 | 16 | 0.128 | 0.03 |  |  |  |
+
+
+![threshold](mechanism_threshold_cross.png)
+
+
+**By issuer and rating status at the time:**
+
+
+| parent_key | parent_name | sub_ig_at_the_time | months | basis | cds |
+|---|---|---|---|---|---|
+| qatar state | Qatar, State of (Government) | 0.0 | 12 | -9.0 | 34.4 |
+| diversified global holding mamoura | Mamoura Diversified Global Holding PJSC | 0.0 | 31 | -18.8 | 37.3 |
+| abu bank dhabi first | First Abu Dhabi Bank PJSC | 0.0 | 49 | -7.7 | 39.5 |
+| dp world | DP World Ltd | 0.0 | 22 | -29.7 | 58.4 |
+| bank national saudi | The Saudi National Bank SJSC | 0.0 | 49 | -4.9 | 60.7 |
+| arabian oil saudi | Saudi Arabian Oil Co | 0.0 | 65 | -6.8 | 61.2 |
+| banque fransi saudi | Banque Saudi Fransi SJSC | 0.0 | 42 | 2.2 | 62.3 |
+| fund investment public | Public Investment Fund | 0.0 | 37 | -8.6 | 63.3 |
+| arabia kingdom saudi | Saudi Arabia, Kingdom of (Government) | 0.0 | 115 | -2.8 | 72.7 |
+| electricity oman transmission | Oman Electricity Transmission Company S.A.O.C | 0.0 | 13 | -4.1 | 75.6 |
+| dubai investment | Investment Corporation Of Dubai | 0.0 | 55 | -20.3 | 88.6 |
+| aerospace dae dubai enterprise | Dubai Aerospace Enterprise (DAE) Ltd | 0.0 | 39 | -8.6 | 94.2 |
+| oman sultanate | Oman, Sultanate of (Government) | 0.0 | 18 | -17.2 | 102.5 |
+| dubai emirate | Dubai, Emirate of | 0.0 | 54 | 26.7 | 154.2 |
+| emirate sharjah | Sharjah, Emirate Of | 0.0 | 67 | -43.6 |  |
+| bapco energies | BAPCO Energies BSCC Closed | 1.0 | 67 | -91.9 | 231.5 |
+| oman sultanate | Oman, Sultanate of (Government) | 1.0 | 79 | -63.2 | 243.9 |
+| bahrain kingdom | Bahrain, Kingdom of (Government) | 1.0 | 110 | -55.9 | 262.7 |
+
+
+**Sharjah is the exception.** Its mean basis is -44bp, in line with the sub-IG group, but it counts as investment grade under the 2-of-3 rule: its latest ratings are S&P BBB-, Moody's Ba1, and Fitch does not rate it, so only one of the two rating agencies is below the line. It is split rated, and the lowest-rating rule treats it as sub-IG from 2022-07-19. Its sukuk premium does not start there: the basis averages -59bp in the 16 months up to that action, when both agencies had it at investment grade, and -39bp in the 51 months after. So the premium is concentrated in sub-IG credits but is not exclusive to them, and the rating line is an approximation of whatever investors are pricing.
 
 
 **Oman before vs after each upgrade to investment grade** (12 months either side, the upgrade month excluded; Newey-West 90% CI, 3 lags). Upgrade months as supplied: S&P BBB- 2024-09; Moody's Baa3 2025-07; Fitch BBB- 2025-12. Windows overlap because the upgrades are 4-10 months apart, and the last one has fewer than 12 months after it, so read these as descriptive.

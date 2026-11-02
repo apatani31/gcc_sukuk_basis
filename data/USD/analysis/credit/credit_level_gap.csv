@@ -1,2 +1,2 @@
-issuers,issuers_negative,governments,governments_negative,sub_ig_mean_bp,ig_mean_bp,gap_bp,p_wild_government,clusters
-18,16,8,8,-50.0,-5.1,-45.0,0.015,8
+issuers,issuers_negative,governments,governments_negative,sub_ig_mean_bp,ig_mean_bp,gap_bp,p_wild_government,p_wild_issuer,obligor_months,rated_issuers,gap_ex_sharjah_bp,p_wild_government_ex_sharjah,snapshot_sub_ig_mean_bp,snapshot_ig_mean_bp,snapshot_gap_bp,snapshot_p_wild_government,snapshot_clusters
+18,16,8,8,-67.6,-9.4,-58.2,0.038,0.014,924,17,-62.1,0.007,-50.0,-5.1,-45.0,0.015,8

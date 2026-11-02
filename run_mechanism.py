@@ -18,10 +18,10 @@ import numpy as np
 import pandas as pd
 
 from src import config as C
-from src.mechanism import (before_after, bond_month_panel, hinge, inference_table, issuer_ratings,
-                           mechanism_regressions, prep_issuer_month, structure_tables, threshold_models,
-                           time_varying_threshold)
-from src.ratings import ISSUER_GOVERNMENT, load_ratings, monthly_status, template
+from src.mechanism import (add_rating_flags, before_after, bond_month_panel, inference_table, issuer_ratings,
+                           mechanism_regressions, prep_issuer_month, rating_groups, sharjah_text,
+                           structure_tables, threshold_models, time_varying_threshold)
+from src.ratings import load_ratings, monthly_status, template
 from src.summary import _md
 from src.twin_report import CONV_C, GRID, INK, INK2, SUKUK_C, SURFACE, _style
 
@@ -29,49 +29,53 @@ log = logging.getLogger("run_mechanism")
 
 
 def short(n: str) -> str:
-    return n.split(",")[0].replace(" PJSC", "").replace(" SJSC", "").replace(" BSCC Closed", "")[:24]
+    return n.split(",")[0].replace(" PJSC", "").replace(" SJSC", "").replace(" BSCC Closed", "")[:32]
 
 
-def chart_threshold(xs: pd.DataFrame, prof: pd.DataFrame, out: Path) -> None:
-    """Basis vs CDS across issuers with the linear fit, the best spline and sub-IG/IG means."""
+def chart_threshold(groups: pd.DataFrame, out: Path) -> None:
+    """Basis vs CDS, one point per issuer and rating status at the time (an issuer whose status changed,
+    like Oman, appears twice), with the obligor-month mean of each rating group."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    import statsmodels.formula.api as smf
 
-    allp = xs.dropna(subset=["cds", "basis"]).copy()
-    dub = allp[allp["parent_key"] == "dubai emirate"]
-    d = allp[allp["parent_key"] != "dubai emirate"].copy()   # fits exclude Dubai govt (20y brackets)
-    d["cds100"] = d["cds"] / 100
-    fig, ax = plt.subplots(figsize=(8.5, 5.2), facecolor=SURFACE)
+    nocds = groups[groups["cds"].isna()]
+    d = groups.dropna(subset=["cds"])
+    dub = d["parent_key"] == "dubai emirate"
+    sub = d["sub_ig_at_the_time"] == 1
+    fig, ax = plt.subplots(figsize=(8.5, 5.4), facecolor=SURFACE)
     _style(ax)
     ax.axhline(0, color=INK2, linewidth=0.8)
-    grid = np.linspace(d["cds"].min(), d["cds"].max(), 200)
-    if len(dub):
-        ax.scatter(dub["cds"], dub["basis"], s=42, facecolor="none", edgecolor=SUKUK_C, linewidth=1.5, zorder=3,
-                   label="Dubai govt (excluded: 20y brackets)")
-    lin = smf.ols("basis ~ cds100", d).fit()
-    ax.plot(grid, lin.params["Intercept"] + lin.params["cds100"] * grid / 100, color=GRID, linewidth=2,
-            linestyle="--", label="Linear fit")
-    if len(prof):
-        k = float(prof.loc[prof["best"], "kink_bp"].iloc[0])
-        sp = smf.ols("basis ~ cds100 + h", d.assign(h=hinge(d["cds"], k) / 100)).fit()
-        ax.plot(grid, sp.params["Intercept"] + sp.params["cds100"] * grid / 100 + sp.params["h"] * hinge(grid, k) / 100,
-                color=CONV_C, linewidth=2, label=f"Spline, kink at {k:.0f}bp")
-    sub = d["sub_ig_oman"].astype(bool)
-    ax.scatter(d.loc[~sub, "cds"], d.loc[~sub, "basis"], s=42, color=SUKUK_C, edgecolor=SURFACE, linewidth=1.5,
-               zorder=3, label="Investment grade")
+    # group means use every rated obligor-month, including issuers without a CDS series (Sharjah)
+    for flag, label, color in ((0.0, "Mean, investment-grade months", GRID), (1.0, "Mean, sub-IG months", CONV_C)):
+        g = groups[groups["sub_ig_at_the_time"] == flag]
+        pts = d[d["sub_ig_at_the_time"] == flag]
+        mean = (g["basis"] * g["months"]).sum() / g["months"].sum()
+        ax.hlines(mean, pts["cds"].min(), pts["cds"].max(), color=color, linewidth=2, linestyle="--",
+                  label=f"{label}: {mean:.0f}bp")
+    ax.scatter(d.loc[~sub & ~dub, "cds"], d.loc[~sub & ~dub, "basis"], s=42, color=SUKUK_C, edgecolor=SURFACE,
+               linewidth=1.5, zorder=3, label="Investment grade at the time")
     ax.scatter(d.loc[sub, "cds"], d.loc[sub, "basis"], s=42, marker="s", color=SUKUK_C, edgecolor=SURFACE,
-               linewidth=1.5, zorder=3, label="Sub-investment grade")
-    for r in allp[(allp["cds"] > 100) | (allp["basis"].abs() > 15)].itertuples():
-        ax.annotate(short(r.parent_name), (r.cds, r.basis), xytext=(5, 3), textcoords="offset points",
-                    fontsize=8, color=INK2)
+               linewidth=1.5, zorder=3, label="Sub-investment grade at the time")
+    ax.scatter(d.loc[dub, "cds"], d.loc[dub, "basis"], s=42, facecolor="none", edgecolor=SUKUK_C, linewidth=1.5,
+               zorder=3, label="Dubai govt (DEWA proxy; basis on 20y brackets)")
+    twice = d["parent_key"].duplicated(keep=False)
+    for r, tw in zip(d.itertuples(), twice):
+        if r.cds > 100 or abs(r.basis) > 15 or tw:
+            name = short(r.parent_name) + ((" (sub-IG months)" if r.sub_ig_at_the_time == 1 else " (IG months)") if tw else "")
+            below = r.parent_key == "dubai investment"   # its label would otherwise sit on Oman's
+            ax.annotate(name, (r.cds, r.basis), xytext=(5, -11 if below else 3), textcoords="offset points",
+                        fontsize=8, color=INK2)
     ax.set_xlabel("Mean sovereign 5y CDS of the issuer's government (bp)", color=INK2, fontsize=9)
     ax.set_ylabel("Mean twin-curve basis (bp)", color=INK2, fontsize=9)
-    ax.set_title("Sukuk premium vs credit risk across issuers: a threshold, not a line", fontsize=10,
+    ax.set_title("Sukuk premium vs credit risk, by rating status at the time (2 of 3 agencies)", fontsize=10,
                  color=INK, loc="left")
     ax.legend(frameon=False, fontsize=8, labelcolor=INK2, loc="lower left")
-    fig.tight_layout()
+    if len(nocds):
+        fig.text(0.01, 0.01, "No CDS, not plotted but in the group means: " + "; ".join(
+            f"{short(r.parent_name)} {r.basis:.0f}bp ({'sub-IG' if r.sub_ig_at_the_time == 1 else 'investment grade'} "
+            "under 2 of 3)" for r in nocds.itertuples()), fontsize=7.5, color=INK2)
+    fig.tight_layout(rect=(0, 0.03, 1, 1))
     fig.savefig(out, dpi=160, facecolor=SURFACE)
     plt.close(fig)
 
@@ -133,14 +137,19 @@ def main(argv=None) -> int:
         months = pd.PeriodIndex(sorted(im["month"].unique()), freq="M")
         ms = monthly_status(rt, months)
         ms["month"] = ms["month"].astype(str)
-        im["government"] = im["parent_key"].map(ISSUER_GOVERNMENT)
-        im = im.merge(ms[["government", "month", "sub_ig", "single_agency"]].rename(
-            columns={"sub_ig": "sub_rating"}), on=["government", "month"], how="left")
+        im = add_rating_flags(im, rt)
         tv_rows += time_varying_threshold(im, "sub_rating", "Ratings, 2 of 3 agencies below BBB-/Baa3", B=a.draws)
         # robustness: drop Dubai, whose status comes from the DEWA proxy rather than its own rating
         im["sub_rating_ex_dubai"] = im["sub_rating"].where(im["government"] != "Dubai")
         tv_rows += time_varying_threshold(im, "sub_rating_ex_dubai", "Ratings, Dubai excluded (robustness)",
                                           B=a.draws)
+        # robustness: drop Sharjah (split rated, IG under 2 of 3); it has no CDS, so only the level gap changes
+        im["sub_rating_ex_sharjah"] = im["sub_rating"].where(im["government"] != "Sharjah")
+        tv_rows += time_varying_threshold(im, "sub_rating_ex_sharjah", "Ratings, Sharjah excluded (robustness)",
+                                          B=a.draws, slopes=False)
+        tv_rows += time_varying_threshold(im, "sub_lowest", "Lowest rating below BBB-/Baa3 (robustness)", B=a.draws)
+        groups = rating_groups(im)
+        groups.round(1).to_csv(out / "mechanism_rating_groups.csv", index=False)
         ms.to_csv(out / "mechanism_rating_status_monthly.csv", index=False)
         proxies = sorted({s.split(";")[0].strip() for s in rt["source"].dropna() if "proxy" in s.lower()})
         rating_note = (f"Ratings file: `{C.SOVEREIGN_RATINGS_PATH.name}` ({len(rt)} rating rows). "
@@ -159,7 +168,8 @@ def main(argv=None) -> int:
                        f"(template written to `{tmpl.name}`).")
     tv = pd.DataFrame(tv_rows)
     oman_ba = before_after(im, "oman sultanate", C.OMAN_UPGRADES)
-    chart_threshold(iss, thr["profile_cross"], out / "mechanism_threshold_cross.png")
+    if C.SOVEREIGN_RATINGS_PATH.exists():
+        chart_threshold(groups, out / "mechanism_threshold_cross.png")
     chart_profile(thr["profile_cross"], thr["profile_within"], out / "mechanism_spline_profile.png")
 
     for name, df in (("mechanism_structure_overall", overall), ("mechanism_structure_within", within),
@@ -205,13 +215,14 @@ def main(argv=None) -> int:
          "interbank spread) should *weaken* the premium (CDS x interbank > 0). The negative liquidity-gap "
          "coefficient fits the same story: sukuk that trade less are held to maturity by these banks and price "
          "richer, which is the opposite of a liquidity premium.\n",
-         "## 2. Threshold shape\n",
-         "Ratings are a **snapshot as of the export**, not a history. The Oman sovereign shows Baa3 (investment "
-         "grade) after its 2024 upgrades, but it was rated below investment grade for most of the sample, so a "
-         "variant counts it as sub-IG. The CDS spline does not need ratings because CDS varies over time.\n\n",
+         "## 2. Threshold shape (snapshot ratings, for comparison)\n",
+         "**The lead classification is the time-varying rating rule in section 8.** This section uses ratings as a "
+         "**snapshot as of the export**, not a history, and is kept for comparison. The Oman sovereign shows Baa3 "
+         "(investment grade) after its 2024-2025 upgrades, but it was rated below investment grade for most of the "
+         "sample, so a variant counts it as sub-IG. Snapshot ratings also count Sharjah as sub-IG (Moody's Ba1), "
+         "unlike the 2-of-3 rule. The CDS spline does not need ratings because CDS varies over time.\n\n",
          _md(iss[["parent_name", "rating_snapshot", "sub_ig", "sub_ig_oman", "cds", "basis", "months"]].round(1)),
          "\n", _md(thr["table"]),
-         "\n![threshold](mechanism_threshold_cross.png)\n",
          "\n![profile](mechanism_spline_profile.png)\n",
          "**Reading the spline profiles:**\n", *prof_reading,
          "- Across issuers only three issuers sit above 100bp CDS, so the data say \"flat, then a drop\" but "
@@ -220,14 +231,20 @@ def main(argv=None) -> int:
          "Spline profiles (fit for each kink location):\n\n**Across issuers (excl. Dubai govt):**\n\n",
          _md(thr["profile_cross"].drop(columns=["ssr"]).round(2)),
          "\n**Within issuers:**\n\n", _md(thr["profile_within"].drop(columns=["ssr"]).round(2)),
-         "\n## 8. Time-varying classification\n",
+         "\n## 8. Time-varying classification (the lead specification)\n",
          "Snapshot ratings misclassify issuers whose rating changed (Oman). Here the sub-IG flag varies by "
-         f"obligor-month. The CDS rule marks a month sub-IG when the government's 5y CDS exceeds "
-         f"{C.CDS_SUB_IG_BP:.0f}bp. The rating rule needs at least two of S&P, Moody's and Fitch below "
-         "BBB-/Baa3 (a single rating agency decides only where just one rates the government). Level gaps use "
-         "obligor-months without fixed effects; the extra slope uses issuer fixed effects. Wild bootstrap "
-         "clusters are obligor groups (government, or the issuer itself where no government CDS applies).\n\n",
+         "obligor-month, and **the 2-of-3 rating rule is the lead specification** in the credit report and the "
+         "synthesis: at least two of S&P, Moody's and Fitch below BBB-/Baa3 (a single rating agency decides only "
+         f"where just one rates the government). Robustness rows: Dubai excluded, Sharjah excluded, the lowest "
+         f"available rating, and a CDS rule (government 5y CDS above {C.CDS_SUB_IG_BP:.0f}bp that month). Level "
+         "gaps use obligor-months without fixed effects; the extra slope uses issuer fixed effects. Wild bootstrap "
+         "clusters are obligor groups (government, or the issuer itself where no government CDS applies). `coef_bp` "
+         "for the level gap equals `sub_ig_mean_bp` minus `ig_mean_bp`.\n\n",
          rating_note + "\n\n", _md(tv),
+         "\n![threshold](mechanism_threshold_cross.png)\n",
+         "\n**By issuer and rating status at the time:**\n\n",
+         _md(groups.round(1)) if C.SOVEREIGN_RATINGS_PATH.exists() else "_ratings file not present_\n",
+         "\n" + (sharjah_text(im, rt) if C.SOVEREIGN_RATINGS_PATH.exists() else "") + "\n",
          "\n**Oman before vs after each upgrade to investment grade** (12 months either side, the upgrade month "
          "excluded; Newey-West 90% CI, 3 lags). Upgrade months as supplied: "
          + "; ".join(f"{ag} {r} {ym}" for ag, ym, r in C.OMAN_UPGRADES)

@@ -342,6 +342,12 @@ the choice matters.
   agencies from August 2025); **Sharjah counts as investment grade
   throughout**, because Fitch does not rate it and only Moody's (Ba1) of the
   two remaining agencies is below the line (S&P BBB-).
+  This rule is the **lead specification** for the sub-IG level gap and slope in
+  `credit_results.md`, `mechanism_results.md` (section 8) and `synthesis.md`.
+  Export-date snapshot ratings, which count Sharjah as sub-IG, are kept only as
+  a comparison. Sharjah's premium looks like the sub-IG group's and predates
+  Moody's 2022 cut, so the reports describe the premium as concentrated in
+  sub-IG credits, not exclusive to them.
 - **Dubai's rating is proxied by DEWA.** The Government of Dubai is not rated
   by S&P, Moody's or Fitch, so it would otherwise drop out of the rating rule.
   Its rows in `sovereign_ratings.csv` are the ratings of the Dubai Electricity

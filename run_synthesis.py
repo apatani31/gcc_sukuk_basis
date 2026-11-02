@@ -60,7 +60,6 @@ def main(argv=None) -> int:
     panel = row(within, model="Sovereign CDS + liquidity gap")
     fd = row(inf, model="First differences: d(basis) ~ d(CDS) + d(liquidity)")
     sub_extra = row(thr, term="cds100:sub_ig_oman_i")
-    ig_slope = row(thr, model="Within issuers: CDS slope, investment grade")
     tenor = row(mech, term="cds100:tau_c")
     ijara = row(mech, term="cds100:ijara")
     ib = row(mech, term="cds100:ib_c")
@@ -70,7 +69,15 @@ def main(argv=None) -> int:
     hp = dict(zip(("tenor", "ijara", "ib", "liq"), holm([r.p_wild_government for r in four])))
     n_struct, n_ijara, n_hybrid = int(struct.sum()), int(struct.get("Ijara", 0)), int(struct.get("Hybrid Sukuk", 0))
     tv_cds = tv[tv["model"].str.startswith("CDS >") & (tv["term"] == "sub_t")].iloc[0]
-    tv_rat = tv[tv["model"].str.startswith("Ratings") & (tv["term"] == "sub_t")]
+    tv_rat = tv[(tv["model"].str.startswith("Ratings") | tv["model"].str.startswith("Lowest")) & (tv["term"] == "sub_t")]
+    tv_main = tv_rat[tv_rat["model"].str.startswith("Ratings, 2 of 3")].iloc[0]
+    tv_exd = tv_rat[tv_rat["model"].str.contains("Dubai excluded")].iloc[0]
+    tv_exs = tv_rat[tv_rat["model"].str.contains("Sharjah excluded")].iloc[0]
+    tv_low = tv_rat[tv_rat["model"].str.startswith("Lowest")].iloc[0]
+    tv_ig = tv[tv["model"].str.startswith("Ratings, 2 of 3") & (tv["term"] == "cds100")].iloc[0]
+    tv_extra = tv[tv["model"].str.startswith("Ratings, 2 of 3") & (tv["term"] == "cds100:sub_t")].iloc[0]
+    sharjah = rd("credit/credit_issuer_means.csv")
+    sharjah = sharjah[sharjah["parent_key"] == "emirate sharjah"].iloc[0]
     moodys = oba[oba["event"].str.startswith("Moody's")].iloc[0]
     # primary market: MAIN rule (pre-committed); robustness range over A, B and Bahrain-excluded MAIN
     pm = row(pr, rule="MAIN", sample="All issuers")
@@ -100,23 +107,25 @@ def main(argv=None) -> int:
          f"{int(level.governments)} obligor groups negative on average (issuers grouped by the government backing "
          "them; Sharjah and the multilateral Arab Energy Fund stand alone).",
          "Holding the issuer fixed, investors accept a lower yield on sukuk."),
-        ("The sukuk premium is a sub-investment-grade phenomenon",
-         f"Sub-IG issuers {level.sub_ig_mean_bp:.0f}bp vs investment grade {level.ig_mean_bp:.0f}bp: gap "
-         f"{level.gap_bp:.0f}bp, wild bootstrap p = {fmt_p(level.p_wild_government)} by obligor group. With a "
-         f"time-varying rule (government CDS above 150bp that month) the gap is {tv_cds.coef_bp:.0f}bp "
-         f"(p = {fmt_p(tv_cds.p_wild_government)} by obligor group, {fmt_p(tv_cds.p_wild_issuer)} by issuer)"
-         + (f"; with time-varying ratings (2 of 3 agencies below BBB-/Baa3, Dubai via its DEWA proxy) "
-            f"{tv_rat.iloc[0].coef_bp:.0f}bp (p = {fmt_p(tv_rat.iloc[0].p_wild_government)}; "
-            f"{tv_rat.iloc[-1].coef_bp:.0f}bp, p = {fmt_p(tv_rat.iloc[-1].p_wild_government)}, with Dubai excluded)."
-            if len(tv_rat) else "; the rating-based version awaits the ratings history.")
-         + f" Oman's sukuk premium narrowed by {moodys.change_bp:.0f}bp (90% CI {moodys.ci90}) in the year after "
-         "Moody's upgrade made it investment grade at two of three agencies.",
-         "A threshold, not a smooth gradient: investment-grade issuers get single-digit premiums."),
+        ("The sukuk premium is concentrated in sub-investment-grade credits",
+         f"By rating at the time (2 of 3 agencies below BBB-/Baa3; Dubai via its DEWA proxy), sub-IG obligor-months "
+         f"average {tv_main.sub_ig_mean_bp:.0f}bp vs {tv_main.ig_mean_bp:.0f}bp for investment grade: gap "
+         f"{tv_main.coef_bp:.0f}bp, wild bootstrap p = {fmt_p(tv_main.p_wild_government)} by obligor group. Robustness: "
+         f"without Dubai {tv_exd.coef_bp:.0f}bp (p = {fmt_p(tv_exd.p_wild_government)}); without Sharjah "
+         f"{tv_exs.coef_bp:.0f}bp (p = {fmt_p(tv_exs.p_wild_government)}); lowest rating {tv_low.coef_bp:.0f}bp "
+         f"(p = {fmt_p(tv_low.p_wild_government)}); government CDS above 150bp {tv_cds.coef_bp:.0f}bp "
+         f"(p = {fmt_p(tv_cds.p_wild_government)}); export-date snapshot ratings {level.snapshot_gap_bp:.0f}bp "
+         f"(p = {fmt_p(level.snapshot_p_wild_government)}). Oman's sukuk premium narrowed by {moodys.change_bp:.0f}bp "
+         f"(90% CI {moodys.ci90}) in the year after Moody's upgrade made it investment grade at two of three agencies.",
+         f"Concentrated, not exclusive: Sharjah ({sharjah.basis:.0f}bp) counts as investment grade under the rule "
+         "because it is split rated and Fitch does not rate it, yet its premium looks like the sub-IG group's and "
+         "predates Moody's 2022 cut. The rating line approximates what investors price; it is not a sharp threshold."),
         ("Within the weakest sovereigns, the sukuk premium moves with credit risk",
          f"Oman {oman.slope_levels_per_100bp:+.1f}bp and Bahrain {bah.slope_levels_per_100bp:+.1f}bp per 100bp of CDS "
          f"(Newey-West t {oman.t_nw_levels:.1f}, {bah.t_nw_levels:.1f}); also in monthly changes "
-         f"({oman.slope_changes_per_100bp:+.1f}, {bah.slope_changes_per_100bp:+.1f}). For investment-grade issuers "
-         f"the within slope is {ig_slope.coef_bp:+.1f}bp.",
+         f"({oman.slope_changes_per_100bp:+.1f}, {bah.slope_changes_per_100bp:+.1f}). By rating at the time, the within "
+         f"slope is {tv_ig.coef_bp:+.1f}bp in investment-grade months and {tv_extra.coef_bp:+.1f}bp lower in sub-IG months "
+         f"(p = {fmt_p(tv_extra.p_wild_government)}).",
          f"The pooled panel slope ({panel.slope_per_100bp:+.1f}bp) is not significant on its own once only six CDS "
          f"series are counted (wild bootstrap p = {fmt_p(panel.p_wild_government)}); the case studies carry the claim."),
         ("The sukuk premium exists at issue, not only in secondary quotes",
@@ -167,18 +176,18 @@ def main(argv=None) -> int:
     spec = pd.DataFrame([
         {"specification": "Twin-curve basis, cross-issuer mean", "estimate": f"{tw.mean_of_issuer_means_bp:.1f}bp",
          "inference": f"t = {tw.t:.2f} across {tw.issuers} issuers", "source": "twin_results.md"},
-        {"specification": "Sub-IG minus IG basis (level, snapshot ratings with Oman sub-IG)",
-         "estimate": f"{level.gap_bp:.1f}bp",
-         "inference": f"wild p = {fmt_p(level.p_wild_government)} (obligor groups, {int(level.clusters)} clusters)",
-         "source": "credit_results.md"},
-        {"specification": "Sub-IG minus IG basis (time-varying: CDS > 150bp)", "estimate": f"{tv_cds.coef_bp:.1f}bp",
-         "inference": f"wild p = {fmt_p(tv_cds.p_wild_government)} (obligor groups), {fmt_p(tv_cds.p_wild_issuer)} (issuer)",
-         "source": "mechanism_results.md"},
         *([{"specification": f"Sub-IG minus IG basis ({r.model.split(':')[0].replace('Ratings', 'time-varying ratings')}"
                              + (", Dubai via DEWA proxy)" if "excluded" not in r.model else ")"),
             "estimate": f"{r.coef_bp:.1f}bp",
             "inference": f"wild p = {fmt_p(r.p_wild_government)} (obligor groups), {fmt_p(r.p_wild_issuer)} (issuer)",
             "source": "mechanism_results.md"} for r in tv_rat.itertuples()]),
+        {"specification": "Sub-IG minus IG basis (time-varying: CDS > 150bp)", "estimate": f"{tv_cds.coef_bp:.1f}bp",
+         "inference": f"wild p = {fmt_p(tv_cds.p_wild_government)} (obligor groups), {fmt_p(tv_cds.p_wild_issuer)} (issuer)",
+         "source": "mechanism_results.md"},
+        {"specification": "Sub-IG minus IG basis (comparison: export-date snapshot ratings, Oman counted sub-IG)",
+         "estimate": f"{level.snapshot_gap_bp:.1f}bp",
+         "inference": f"wild p = {fmt_p(level.snapshot_p_wild_government)} (obligor groups, {int(level.snapshot_clusters)} clusters)",
+         "source": "credit_results.md"},
         *([{"specification": f"Extra CDS slope when sub-IG ({r.model.split(':')[0].replace('Ratings', 'time-varying ratings')})",
             "estimate": f"{r.coef_bp:+.1f} per 100bp",
             "inference": f"wild p = {fmt_p(r.p_wild_government)} (obligor groups), {fmt_p(r.p_wild_issuer)} (issuer)",
@@ -197,7 +206,7 @@ def main(argv=None) -> int:
                       f"groups), {fmt_p(panel.p_wild_issuer)} (issuer)", "source": "credit_results.md"},
         {"specification": "Panel, first differences", "estimate": f"{fd.coef_bp:+.1f} per 100bp",
          "inference": f"wild p = {fmt_p(fd.p_wild_government)} (obligor groups)", "source": "mechanism_results.md"},
-        {"specification": "Extra within slope for sub-IG issuers", "estimate": f"{sub_extra.coef_bp:+.1f} per 100bp",
+        {"specification": "Extra within slope for sub-IG issuers (comparison: snapshot ratings)", "estimate": f"{sub_extra.coef_bp:+.1f} per 100bp",
          "inference": f"wild p = {fmt_p(sub_extra.p_wild_government)} (obligor groups), "
                       f"{fmt_p(sub_extra.p_wild_issuer)} (issuer)", "source": "mechanism_results.md"},
         {"specification": "CDS x remaining maturity", "estimate": f"{tenor.coef_bp:+.2f} per 100bp per year",
@@ -236,8 +245,9 @@ def main(argv=None) -> int:
         L += [f"{i}. **{h}.** {n}", f"   *{interp}*"]
     L += ["\n## Main specifications\n", _md(spec),
           "\n## Charts\n",
-          "**1. The sukuk premium across issuers is a threshold** (sub-investment-grade issuers marked as squares; the "
-          "Dubai government's basis rests on 20-year interpolation brackets and is excluded from the fits):\n",
+          "**1. The sukuk premium is concentrated in sub-investment-grade credits** (each issuer plotted by its rating "
+          "status at the time, so Oman appears twice; dashed lines are the group means; the Dubai government's basis "
+          "rests on 20-year interpolation brackets and is shown hollow; Sharjah has no CDS and is noted under the chart):\n",
           "![threshold](mechanism/mechanism_threshold_cross.png)\n",
           "**2. Within issuers, the sukuk premium follows the government's CDS where CDS moves** (Bahrain, Oman), "
           "and stays near zero where it does not (KSA):\n",
@@ -254,9 +264,9 @@ def main(argv=None) -> int:
           "- drivers/drivers_results.md: interbank, issuance and the common factor.\n",
           "## Main caveats\n",
           "- Six independent sovereign CDS series and 18 issuers: small-sample inference throughout.",
-          "- The headline level gap uses export-date snapshot ratings with Oman counted as sub-IG; the "
-          "time-varying rating rule (hand-compiled histories; Dubai proxied by DEWA, rationale in README.md) "
-          "and the CDS rule confirm it. Under the 2-of-3 rule Sharjah counts as investment grade.",
+          "- Sub-IG status uses each government's rating at the time (hand-compiled histories; Dubai proxied by DEWA, "
+          "rationale in README.md). Under the 2-of-3 rule Sharjah counts as investment grade despite a premium like the "
+          "sub-IG group's. Export-date snapshot ratings are kept only as a comparison.",
           "- Secondary sukuk quotes are staler than conventional ones; the primary-market check is the defence.",
           "- Raw LSEG data is not distributed with this repository.\n"]
     (A / "synthesis.md").write_text("\n".join(L), encoding="utf-8")
